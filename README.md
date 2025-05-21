@@ -15,7 +15,7 @@ The diagram shows two primary client types:
 - **Frontend clients** - Web applications built with modern frameworks (Angular, Vue, React)
 - **Mobile applications** - Represented by a smartphone icon with analytics interface
 
-These client applications connect to the backend services through the ingress layer, matching the "Client Applications Layer" described in section 2.1 of the [documentation[(https://github.com/trevor-the-developer/TheMarketPlace-MS-Edition/blob/main/docs/design/technical-design_v1.md).
+These client applications connect to the backend services through the ingress layer, matching the "Client Applications Layer" described in section 2.1 of the [https://github.com/trevor-the-developer/TheMarketPlace-MS-Edition/blob/main/docs/design/technical-design_v1.md](documentation).
 
 ### Ingress Layer (Yellow Vertical Bar)
 Labeled "INGRESS" in the diagram, this component serves as the entry point for all external traffic, implemented using:
@@ -26,11 +26,11 @@ Labeled "INGRESS" in the diagram, this component serves as the entry point for a
 Shown as "GATEWAY" in the diagram, this component:
 - Routes client requests to appropriate microservices
 - Implements the patterns described in section 2.3
-- Built using YARP or Ocelot as specified in the [documentation[(https://github.com/trevor-the-developer/TheMarketPlace-MS-Edition/blob/main/docs/design/technical-design_v1.md)
+- Built using YARP or Ocelot as specified in the [https://github.com/trevor-the-developer/TheMarketPlace-MS-Edition/blob/main/docs/design/technical-design_v1.md](documentation)
 - Serves as the unified entry point for client applications
 
 ### Docker Host Environment
-The dotted-line container labeled "Docker Host" encompasses all backend services, reflecting the containerization approach outlined in section 5.1 of the [documentation[(https://github.com/trevor-the-developer/TheMarketPlace-MS-Edition/blob/main/docs/design/technical-design_v1.md).
+The dotted-line container labeled "Docker Host" encompasses all backend services, reflecting the containerization approach outlined in section 5.1 of the [https://github.com/trevor-the-developer/TheMarketPlace-MS-Edition/blob/main/docs/design/technical-design_v1.md](documentation).
 
 ### Microservices Layer (Center Boxes)
 The diagram shows five distinct microservices, each following the architecture described in section 2.5:
@@ -43,7 +43,7 @@ The diagram shows five distinct microservices, each following the architecture d
 Each service is depicted with:
 - A hexagonal API component (color-coded)
 - A database (blue cylinder)
-- Clear boundaries between services, enforcing the domain separation described in the [documentation[(https://github.com/trevor-the-developer/TheMarketPlace-MS-Edition/blob/main/docs/design/technical-design_v1.md)
+- Clear boundaries between services, enforcing the domain separation described in the [https://github.com/trevor-the-developer/TheMarketPlace-MS-Edition/blob/main/docs/design/technical-design_v1.md](documentation)
 
 ### Pub/Sub Channel (Blue Vertical Bar)
 Labeled "Pub Sub Channel" in the diagram, this represents the asynchronous communication infrastructure described in section 4.2, allowing services to communicate without direct coupling.
@@ -105,6 +105,6 @@ The diagram effectively demonstrates the benefits described in section 8:
 - **Service Independence** - Clear boundaries and communication patterns
 - **Flexibility** - Different database technologies per service as needed
 
-The architecture diagram provides a visual representation of the detailed technical documentation, showing how the various components work together to create a modern, event-driven microservices platform. The implementation follows industry best practices for building distributed systems, with a focus on decoupling, scalability, and resilience through messaging patterns.
+The architecture diagram provides a visual representation of the detailed technical [https://github.com/trevor-the-developer/TheMarketPlace-MS-Edition/blob/main/docs/design/technical-design_v1.md](documentation), showing how the various components work together to create a modern, event-driven microservices platform. The implementation follows industry best practices for building distributed systems, with a focus on decoupling, scalability, and resilience through messaging patterns.
 
 The combination of containerisation, API gateway routing, and the publisher/subscriber model with RabbitMQ and Wolverine.FX creates a robust foundation for developing and deploying independent microservices while maintaining reliable communication between them.

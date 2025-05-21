@@ -26,7 +26,7 @@ Labeled "INGRESS" in the diagram, this component serves as the entry point for a
 Shown as "GATEWAY" in the diagram, this component:
 - Routes client requests to appropriate microservices
 - Implements the patterns described in section 2.3
-- built using YARP or Ocelot as specified in the documentation
+- Built using YARP or Ocelot as specified in the documentation
 - Serves as the unified entry point for client applications
 
 ### Docker Host Environment

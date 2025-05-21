@@ -18,7 +18,7 @@ The diagram shows two primary client types:
 These client applications connect to the backend services through the ingress layer, matching the "Client Applications Layer" described in section 2.1 of the documentation.
 
 ### Ingress Layer (Yellow Vertical Bar)
-Labeled "INGRESS" in the diagram, this component serves as the entry point for all external traffic, likely implemented using:
+Labeled "INGRESS" in the diagram, this component serves as the entry point for all external traffic, implemented using:
 - Nginx, Traefik, or Envoy as specified in section 2.2
 - Handles load balancing, TLS termination, and initial request routing
 
@@ -26,7 +26,7 @@ Labeled "INGRESS" in the diagram, this component serves as the entry point for a
 Shown as "GATEWAY" in the diagram, this component:
 - Routes client requests to appropriate microservices
 - Implements the patterns described in section 2.3
-- Likely built using YARP or Ocelot as specified in the documentation
+- built using YARP or Ocelot as specified in the documentation
 - Serves as the unified entry point for client applications
 
 ### Docker Host Environment

@@ -163,7 +163,6 @@ The messaging infrastructure enables reliable asynchronous communication:
 - Dashboard: http://localhost:5003/hangfire
 
 ## Data Flow Analysis
-
 The communication patterns demonstrate both synchronous and asynchronous interactions:
 
 ### 1. Client-to-Service Flow (Synchronous)
@@ -183,6 +182,7 @@ Listing Service → RabbitMQ → Search Service
                → RabbitMQ → Document Processor
                → RabbitMQ → Notification Service (future)
 ```
+![Message Flow](assets/event-driven-message-flow.png)
 
 **Event Flow Example:**
 1. User creates a new listing via Listing Service

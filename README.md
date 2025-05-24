@@ -202,6 +202,8 @@ API Request → Background Job Queue → Hangfire → Processing → Storage
 
 ## Technical Implementation Highlights
 
+![Clean Archtecture Benefits](assets/clean-architecture.png)
+
 ### Clean Architecture Benefits
 **Separation of Concerns:**
 - **API Layer** - HTTP controllers and DTOs

@@ -1,0 +1,128 @@
+{
+	"info": {
+		"_postman_id": "7c286c34-72ce-48ca-b48c-ec2d168cc6e7",
+		"name": "Demo",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "2140124"
+	},
+	"item": [
+		{
+			"name": "Vehicles",
+			"item": [
+				{
+					"name": "Get all vehicles",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{vehiclesApi}}/api/vehicles",
+							"host": [
+								"{{vehiclesApi}}"
+							],
+							"path": [
+								"api",
+								"vehicles"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get single vehicle",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{vehiclesApi}}/api/vehicles/dc1e4071-d19d-459b-b848-b5c3cd3d151f",
+							"host": [
+								"{{vehiclesApi}}"
+							],
+							"path": [
+								"api",
+								"vehicles",
+								"dc1e4071-d19d-459b-b848-b5c3cd3d151f"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Drivers",
+			"item": [
+				{
+					"name": "Get all drivers",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{driversApi}}/api/drivers",
+							"host": [
+								"{{driversApi}}"
+							],
+							"path": [
+								"api",
+								"drivers"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get single driver",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{driversApi}}/api/drivers/dc1e4071-d19d-459b-b848-b5c3cd3d151f",
+							"host": [
+								"{{driversApi}}"
+							],
+							"path": [
+								"api",
+								"drivers",
+								"dc1e4071-d19d-459b-b848-b5c3cd3d151f"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "vehiclesApi",
+			"value": "http://localhost:5001",
+			"type": "string"
+		},
+		{
+			"key": "driversApi",
+			"value": "http://localhost:6001",
+			"type": "string"
+		}
+	]
+}

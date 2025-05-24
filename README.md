@@ -6,6 +6,7 @@
 ![Marketplace Microservices Architecture](assets/themarketplace-ms-arch.png)
 
 ## Architecture Overview
+![Clean Archtecture Benefits](assets/clean-architecture.png)
 
 The diagram illustrates a modern, event-driven microservices architecture built on .NET 8 with RabbitMQ and MassTransit for reliable messaging, implementing clean architecture principles throughout all services.
 
@@ -201,8 +202,6 @@ API Request → Background Job Queue → Hangfire → Processing → Storage
 - File format conversions
 
 ## Technical Implementation Highlights
-
-![Clean Archtecture Benefits](assets/clean-architecture.png)
 
 ### Clean Architecture Benefits
 **Separation of Concerns:**

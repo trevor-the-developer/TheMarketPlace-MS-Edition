@@ -3,7 +3,7 @@
 ## This repository presents a microservices architecture hosting The Marketplace API and implementing service-based best practices with .NET 8, RabbitMQ, and MassTransit.
 
 ### Architecture Diagram
-![Marketplace Microservices Architecture](assets/marketplace-microservices-arch.png)
+![Marketplace Microservices Architecture](assets/themarketplace-ms-arch.png)
 
 ## Architecture Overview
 

@@ -1,326 +1,484 @@
-# .NET API Architecture with RabbitMQ and Wolverine.FX
-## Technical Overview & Design Rationale
+# The Marketplace Microservices API - Technical Design Document v2.0
 
 ## 1. Executive Summary
 
-This document outlines a modern, scalable .NET API architecture that implements a publisher/subscriber (pub/sub) design pattern using RabbitMQ as the message broker and Wolverine.FX as the messaging framework. The architecture is designed to support the development of distributed, event-driven microservices that are secure, maintainable, and scalable.
+This document outlines the technical architecture for The Marketplace Microservices API, a modern, event-driven distributed system built on .NET 8. The architecture implements microservices patterns with clean architecture principles, utilising RabbitMQ with MassTransit for inter-service communication and a comprehensive technology stack optimised for scalability, maintainability, and resilience.
 
-The primary goals of this architecture are:
+### Key Objectives
 
-- **Decoupling services** to enable independent development, deployment, and scaling
-- **Implementing resilient communication patterns** between services
-- **Providing a secure API gateway** for external client access
-- **Ensuring message reliability** through durable messaging patterns
-- **Supporting horizontal scaling** to meet varying workload demands
-- **Enabling real-time updates** through asynchronous event processing
+- **Service Independence** - Enable autonomous development, deployment, and scaling of business capabilities
+- **Event-Driven Communication** - Implement resilient, asynchronous messaging patterns between services
+- **Clean Architecture** - Maintain clear separation of concerns with testable, maintainable code
+- **Unified API Access** - Provide consistent client interfaces through API Gateway patterns
+- **Data Ownership** - Ensure each service owns and manages its domain data
+- **Horisontal Scalability** - Support independent scaling based on service-specific demands
+- **Real-time Capabilities** - Enable responsive user experiences through event-driven updates
 
 ## 2. Architecture Components
 
 ### 2.1 Client Applications Layer
 
-**Components:**
-- Web Applications (SPAs, traditional web apps)
-- Mobile Applications (iOS, Android)
-- Third-party Services and Integration Points
+**Supported Client Types:**
+- **Web Applications** - Single Page Applications (Angular, React, Vue.js)
+- **Mobile Applications** - Native iOS/Android and cross-platform solutions
+- **API Consumers** - Third-party integrations and B2B partners
 
-**Purpose:**
-This layer represents the various clients that consume the APIs provided by the system. By implementing a unified API gateway pattern, we abstract the internal complexity of our microservices from the clients, providing them with a consistent interface regardless of the underlying service architecture.
+**Access Pattern:**
+All client applications access backend services through a unified API Gateway, providing consistency and abstraction from internal service complexity.
 
 ### 2.2 Ingress Layer
 
-**Components:**
-- Nginx, Traefik, or Envoy
+**Implementation:** NGINX / Traefik / Envoy
 
-**Purpose:**
-The ingress layer serves as the entry point for all external traffic into the system. It provides:
+**Responsibilities:**
+- **Load Balancing** - Distributing incoming requests across gateway instances
+- **TLS Termination** - Managing HTTPS certificates and encryption
+- **Request Routing** - Initial traffic direction to appropriate gateway services
+- **DDoS Protection** - Basic protection against malicious traffic patterns
+- **Health Checks** - Ensuring traffic routes only to healthy gateway instances
 
-- **Load balancing** - Distributing incoming requests across multiple instances
-- **TLS termination** - Handling HTTPS connections and certificate management
-- **Basic rate limiting** - Preventing abuse through excessive requests
-- **Health check integration** - Routing traffic only to healthy service instances
+**Configuration:**
+- Container-based deployment with Docker
+- Integration with container orchestration platforms (Kubernetes/Docker Swarm)
+- Automatic SSL certificate management (Let's Encrypt integration)
 
-**Why Nginx/Traefik/Envoy:**
-These technologies are industry-standard reverse proxies with proven performance at scale. They offer extensive configuration options and can be deployed in containers, making them ideal for cloud and Kubernetes environments. Traefik is particularly well-suited for containerized deployments due to its automatic service discovery capabilities.
+### 2.3 API Gateway Layer
 
-### 2.3 API Gateway
+**Implementation:** ASP.NET Core with custom routing or YARP
 
-**Components:**
-- YARP (Yet Another Reverse Proxy) or Ocelot
+**Core Functions:**
+- **Request Aggregation** - Combining multiple service calls for client optimisation
+- **Protocol Translation** - Converting between external and internal communication protocols
+- **Authentication Integration** - JWT token validation before service forwarding
+- **Rate Limiting** - Protecting downstream services from excessive loads
+- **Request/Response Transformation** - Data format adaptation for client requirements
+- **Circuit Breaker** - Preventing cascade failures through resilience patterns
 
-**Purpose:**
-The API gateway serves as a unified entry point for client applications, abstracting the underlying microservice architecture. It provides:
+**Gateway Services:**
+- Authentication Gateway (Port 5000)
+- Listing Management Gateway (Port 5001)
+- Search Gateway (Port 5002)
+- Document Processing Gateway (Port 5003)
 
-- **Request routing** - Directing requests to appropriate microservices
-- **Request aggregation** - Combining multiple service calls into a single client response
-- **Protocol translation** - Converting between client-friendly protocols and internal service protocols
-- **Authentication integration** - Validating tokens before forwarding requests
-- **Rate limiting and throttling** - Protecting downstream services from excessive loads
+### 2.4 Authentication & Authorisation Service
 
-**Why YARP/Ocelot:**
-Both YARP and Ocelot are .NET-native API gateway solutions, making them ideal for a .NET ecosystem. YARP is Microsoft's newest offering and provides high-performance reverse proxy capabilities with a focus on extensibility. Ocelot is a mature, feature-rich API gateway specifically designed for microservices. Both integrate seamlessly with ASP.NET Core and provide the necessary features for securing and managing API traffic.
-
-### 2.4 Identity Security Layer
-
-**Components:**
-- Identity Server (or Duende Identity Server)
+**Technology Stack:**
+- ASP.NET Core 8
 - JWT Authentication
+- Entity Framework Core with PostgreSQL
+- Identity framework integration
 
-**Purpose:**
-The identity security layer provides centralized authentication and authorization services for the entire architecture. It:
+**Capabilities:**
+- **User Management** - Registration, login, profile management
+- **JWT Token Management** - Issuance, validation, refresh, and revocation
+- **Role-Based Access Control** - Admin, Seller, and Customer roles
+- **Email Confirmation** - Secure user verification workflows
+- **Multi-Factor Authentication** - Enhanced security options
 
-- **Issues and validates security tokens** - Using OAuth 2.0 and OpenID Connect standards
-- **Manages identity** - Handling user registration, login, and profile management
-- **Implements role-based access control** - Enforcing permissions across services
-- **Enables single sign-on** - Providing a unified authentication experience
+**Security Features:**
+- Secure password hashing (bcrypt/scrypt)
+- Token expiration and rotation policies
+- Brute force protection
+- Account lockout mechanisms
 
-**Why Identity Server:**
-Identity Server is an OpenID Connect and OAuth 2.0 framework for ASP.NET Core that provides a complete solution for authentication and authorization. It's a mature, well-tested product that implements security best practices and integrates seamlessly with .NET applications. The JWT token approach enables stateless authentication between services, improving scalability and reducing coupling.
+### 2.5 Core Business Services
 
-### 2.5 Microservices Layer
+#### 2.5.1 Listing Management Service
 
-**Components:**
-- Multiple independent .NET API services
-- Each containing:
-  - API Controllers for direct HTTP interactions
-  - Wolverine Handlers for message processing
-  - Domain logic and data access
+**Purpose:** Manages marketplace listings, categories, and product organisation
 
-**Purpose:**
-The microservices layer contains the business logic of the application, divided into independently deployable services. Each service:
+**Technology Stack:**
+- ASP.NET Core 8
+- Entity Framework Core with PostgreSQL
+- MassTransit for event publishing
+- MediatR for internal command/query handling
+- FluentValidation for input validation
 
-- **Has a specific business responsibility** - Following the single responsibility principle
-- **Owns its data storage** - Maintaining domain boundaries
-- **Exposes APIs** - For direct synchronous communication when needed
-- **Publishes and subscribes to events** - For asynchronous communication
+**Domain Entities:**
+- **Listings** - Products and services offered for sale
+- **Categories** - Hierarchical product categorisation
+- **Tags** - Flexible labeling system for enhanced discoverability
 
-**Why .NET APIs with Wolverine Handlers:**
-ASP.NET Core provides a robust, high-performance framework for building HTTP APIs. By adding Wolverine.FX, we gain powerful message handling capabilities that complement the HTTP endpoints. This dual approach allows services to handle both direct API calls and asynchronous messages, providing flexibility in communication patterns.
+**Event Publishing:**
+- `ListingCreated` - New listing added to marketplace
+- `ListingUpdated` - Existing listing modified
+- `ListingPublished` - Listing becomes publicly visible
+- `ListingDeleted` - Listing removed from marketplace
 
-### 2.6 Message Broker Layer - RabbitMQ
+#### 2.5.2 Search Service
 
-**Components:**
-- RabbitMQ Server
-- Exchanges (for message routing)
-- Queues (for message storage)
-- Bindings (connecting exchanges to queues)
-- Consumers (services receiving messages)
+**Purpose:** Provides unified search capabilities across marketplace entities
 
-**Purpose:**
-RabbitMQ serves as the central message broker, enabling reliable asynchronous communication between services. It provides:
+**Technology Stack:**
+- ASP.NET Core 8
+- OpenSearch for search engine
+- MassTransit for event consumption
+- Custom indexing strategies
 
-- **Message queuing** - Storing messages until they can be processed
-- **Publish/subscribe patterns** - Supporting one-to-many message distribution
-- **Message routing** - Directing messages based on content or pattern matching
-- **Delivery guarantees** - Ensuring messages aren't lost during processing
+**Search Capabilities:**
+- **Full-Text Search** - Content-based search with relevancy scoring
+- **Faceted Search** - Filtering by categories, price ranges, ratings
+- **Geospatial Search** - Location-based listing discovery
+- **Autocomplete** - Real-time search suggestions
+- **Advanced Filtering** - Complex query combinations
 
-**Why RabbitMQ:**
-RabbitMQ is a mature, battle-tested message broker with strong support for the AMQP protocol. It offers excellent performance, reliability, and a rich feature set including:
+**Event Consumption:**
+- Listens to listing events for real-time index updates
+- Maintains search consistency with source data
+- Handles bulk re-indexing operations
 
-- Multiple exchange types (direct, fanout, topic, headers)
-- Message persistence for durability
-- Dead letter exchanges for error handling
-- Publisher confirms for reliable publishing
-- Consumer acknowledgments for reliable processing
-- Clustering for high availability
+#### 2.5.3 Document Processor Service
 
-As an open-source solution, it avoids vendor lock-in while providing enterprise-grade messaging capabilities.
+**Purpose:** Handles document generation, processing, and storage
 
-## 3. Integration with Wolverine.FX
+**Technology Stack:**
+- ASP.NET Core 8
+- Hangfire for background job processing
+- MongoDB for document metadata
+- MinIO for object storage
+- PDF generation libraries
 
-Wolverine.FX is the messaging backbone of this architecture, providing an elegant, convention-based approach to handling messages in .NET applications.
+**Processing Capabilities:**
+- **PDF Generation** - Creating formatted documents from templates
+- **File Upload Management** - Secure file handling and validation
+- **Background Processing** - Asynchronous document operations
+- **Metadata Management** - Document indexing and retrieval
 
-### 3.1 Key Wolverine.FX Features Utilized
+**Storage Integration:**
+- MinIO for scalable object storage
+- MongoDB for document metadata and search
+- Hangfire dashboard for job monitoring
 
-**Message Handling:**
-- **Convention-based handler discovery** - No need to register handlers manually
-- **Strong typing** - Compile-time safety for message contracts
-- **Dependency injection** - Handlers have full access to application services
-- **Asynchronous processing** - Native support for `async/await`
+### 2.6 Message Broker Infrastructure
 
-**RabbitMQ Integration:**
-- **Seamless configuration** - Simple setup for RabbitMQ connections
-- **Exchange/queue declaration** - Automatic provisioning of required infrastructure
-- **Smart routing** - Configurable message-to-exchange mapping
-- **Consumer management** - Handles connection recovery and consumer lifecycle
+**Implementation:** RabbitMQ with MassTransit
 
-**Reliability Features:**
-- **Outbox pattern** - Messages are stored locally before sending, ensuring delivery even if RabbitMQ is temporarily unavailable
-- **Retry policies** - Configurable approaches for handling transient failures
-- **Error queues** - Automatic routing of failed messages to dedicated error queues
-- **Dead letter handling** - Strategies for messages that cannot be processed
+**Messaging Patterns:**
+- **Publisher/Subscriber** - Event broadcasting to multiple consumers
+- **Request/Response** - Synchronous-style messaging over async transport
+- **Send/Receive** - Point-to-point command delivery
 
-**Monitoring and Diagnostics:**
-- **Built-in metrics** - Track message throughput and processing times
-- **Logging integration** - Detailed logs of message handling lifecycle
-- **Tracing support** - Integration with distributed tracing solutions
+**MassTransit Configuration:**
+- Automatic exchange and queue provisioning
+- Message serialisation (JSON)
+- Dead letter queue handling
+- Retry policies with exponential backoff
+- Circuit breaker integration
 
-### 3.2 Why Wolverine.FX Over Alternatives
+**Message Types:**
+- **Events** - Domain events (ListingCreated, UserRegistered)
+- **Commands** - Action requests (ProcessDocument, UpdateIndex)
+- **Queries** - Information requests (GetListingDetails)
 
-Wolverine.FX was chosen over alternatives like MassTransit, NServiceBus, or raw RabbitMQ client for several reasons:
+## 3. Data Architecture
 
-1. **Low ceremony** - Minimal configuration and boilerplate code required
-2. **Performance** - Designed for high throughput with minimal overhead
-3. **Modern .NET integration** - Built for .NET Core and modern hosting models
-4. **Simplicity** - Clean, intuitive API that follows .NET conventions
-5. **Local development** - Built-in support for in-memory transport during development
-6. **Open source** - Active community and transparent development
+### 3.1 Database Per Service Pattern
 
-## 4. Message Flow and Communication Patterns
+Each microservice maintains its own database to ensure data ownership and service independence:
 
-### 4.1 Synchronous Communication (HTTP)
+**Authentication Service:**
+- **Database:** PostgreSQL
+- **Schema:** Users, Roles, Authentication tokens, User profiles
 
-Direct API calls are used when:
-- **Immediate response is required** - User is waiting for the result
-- **CRUD operations** - Simple data manipulation
-- **Query operations** - Data retrieval with filtering and pagination
-- **External client access** - Providing a standardized interface for clients
+**Listing Service:**
+- **Database:** PostgreSQL
+- **Schema:** Listings, Categories, Tags, Relationships
 
-HTTP endpoints are exposed through the API Gateway, which handles authentication, routing, and optional request aggregation.
+**Search Service:**
+- **Database:** OpenSearch
+- **Schema:** Search indexes, Aggregations, Search analytics
+
+**Document Processor:**
+- **Database:** MongoDB
+- **Schema:** Document metadata, Processing jobs, File references
+
+### 3.2 Data Consistency Strategies
+
+**Eventual Consistency:**
+- Cross-service data synchronisation through events
+- Compensation patterns for handling failures
+- Idempotent message processing
+
+**Transactional Boundaries:**
+- ACID transactions within individual services
+- Saga patterns for distributed transactions
+- Outbox pattern for reliable event publishing
+
+## 4. Communication Patterns
+
+### 4.1 Synchronous Communication (HTTP/HTTPS)
+
+**Use Cases:**
+- Client-to-Gateway communication
+- Real-time data queries
+- Administrative operations
+- Health checks and monitoring
+
+**Implementation:**
+- RESTful APIs with OpenAPI documentation
+- JSON request/response formats
+- Standardised error handling
+- Request correlation tracking
 
 ### 4.2 Asynchronous Communication (Messaging)
 
-Messaging is used for:
-- **Event notification** - Informing other services of state changes
-- **Background processing** - Long-running operations
-- **Cross-service workflows** - Multi-step business processes
-- **System resilience** - Handling temporary service outages
+**Use Cases:**
+- Cross-service event notifications
+- Background processing triggers
+- System integration workflows
+- Data synchronisation
 
-#### Message Types:
+**Message Flow Example:**
+```
+1. Listing Service publishes ListingCreated event
+2. RabbitMQ routes event to subscribers
+3. Search Service consumes event and updates index
+4. Document Service generates listing PDF
+5. Notification Service sends user confirmation
+```
 
-1. **Commands** - Requests for a specific action to be performed
-   - Usually point-to-point (one publisher, one subscriber)
-   - Expect completion (success or failure)
-   - Named in imperative form (`CreateOrder`, `ShipProduct`)
+**Reliability Features:**
+- Message persistence for durability
+- Publisher confirms for reliable sending
+- Consumer acknowledgments for processing confirmation
+- Dead letter queues for error handling
 
-2. **Events** - Notifications that something has happened
-   - Usually published to multiple subscribers
-   - No expectation of response
-   - Named in past tense (`OrderCreated`, `ProductShipped`)
+## 5. Clean Architecture Implementation
 
-3. **Queries** - Requests for information
-   - Usually point-to-point
-   - Expect data in response
-   - Named as questions (`GetOrderStatus`, `FindCustomerById`)
+### 5.1 Layer Structure
 
-### 4.3 Saga Pattern for Distributed Transactions
+Each microservice follows Clean Architecture principles:
 
-For operations spanning multiple services that require transactional integrity, the architecture implements the Saga pattern:
+**API Layer (Controllers):**
+- HTTP endpoint definitions
+- Request/response DTOs
+- Input validation
+- Authentication/authorisation attributes
 
-- **Choreography** - Services react to events from other services
-- **Compensation** - Failed steps trigger compensating actions to maintain consistency
-- **Tracking** - Saga state is persisted to monitor long-running processes
+**Application Layer:**
+- Business logic orchestration
+- Command and Query handlers (MediatR)
+- Domain service interfaces
+- Validation rules (FluentValidation)
 
-Wolverine.FX provides built-in support for sagas, making it easier to implement these complex workflows.
+**Domain Layer:**
+- Business entities and value objects
+- Domain services and business rules
+- Repository interfaces
+- Domain events
 
-## 5. Deployment Considerations
+**Infrastructure Layer:**
+- Database access (Entity Framework)
+- External service integrations
+- Message publishing/consuming
+- Configuration management
 
-### 5.1 Containerization
+### 5.2 Dependency Management
 
-The architecture is designed to be container-friendly, with each component deployable as a Docker container. This provides:
+**Dependency Injection:**
+- Service registration through built-in DI container
+- Interface-based abstractions
+- Scoped service lifetimes
+- Configuration options pattern
 
-- **Consistency** - Same environment from development to production
-- **Isolation** - Clear boundaries between services
-- **Portability** - Run anywhere Docker is supported
-- **Scaling** - Easy horizontal scaling of individual components
+**Cross-Cutting Concerns:**
+- Logging (Serilog/NLog)
+- Monitoring and metrics
+- Error handling and resilience
+- Security and authentication
 
-### 5.2 Orchestration
+## 6. Development and Deployment
 
-Kubernetes is the recommended orchestration platform, providing:
+### 6.1 Containerisation Strategy
 
-- **Service discovery** - Automatic DNS resolution between services
-- **Load balancing** - Distributing traffic to service instances
-- **Self-healing** - Restarting failed containers
-- **Rolling updates** - Zero-downtime deployments
-- **Configuration management** - Managing environment-specific settings
+**Docker Implementation:**
+- Multi-stage builds for optimised images
+- Alpine Linux base images for security
+- Non-root user execution
+- Health check definitions
 
-### 5.3 Infrastructure as Code
+**Container Orchestration:**
+- Docker Compose for local development
+- Kubernetes for production deployment
+- Service mesh integration (Istio/Linkerd)
+- Horisontal Pod Autoscaling (HPA)
 
-The entire infrastructure can be defined as code using:
+### 6.2 Development Workflow
 
-- **Terraform** - For cloud resources
-- **Helm charts** - For Kubernetes deployments
-- **Docker Compose** - For local development
+**Local Development:**
+```bash
+# Infrastructure startup
+docker-compose up -d postgres opensearch rabbitmq mongodb minio
 
-## 6. Security Considerations
+# Service development
+./run-dev.sh auth      # Port 5000
+./run-dev.sh listing   # Port 5001
+./run-dev.sh search    # Port 5002
+./run-dev.sh docs      # Port 5003
+```
 
-### 6.1 Service-to-Service Communication
+**Testing Strategy:**
+- Unit tests for domain logic
+- Integration tests for API endpoints
+- Contract tests for service boundaries
+- End-to-end tests for user workflows
 
-Services communicate securely using:
+### 6.3 CI/CD Pipeline
 
-- **JWT tokens** - For authentication between services
-- **TLS** - For encrypted communication
-- **Network policies** - Restricting which services can communicate with each other
+**Build Pipeline:**
+1. Source code checkout
+2. Dependency restoration
+3. Unit test execution
+4. Security scanning
+5. Container image building
+6. Image vulnerability scanning
+7. Artifact publishing
 
-### 6.2 Message Security
-
-Message security is ensured through:
-
-- **Message encryption** - For sensitive data
-- **Digital signatures** - For message integrity
-- **Message validation** - Rejecting malformed messages
-
-### 6.3 External Access
-
-External access is secured by:
-
-- **OAuth 2.0 / OpenID Connect** - For authentication and authorization
-- **API key management** - For third-party integrations
-- **Rate limiting** - Preventing abuse
-- **Input validation** - Rejecting malicious payloads
+**Deployment Pipeline:**
+1. Environment-specific configuration
+2. Database migration execution
+3. Rolling deployment strategy
+4. Health check validation
+5. Rollback capability
 
 ## 7. Monitoring and Observability
 
-The architecture includes comprehensive monitoring:
+### 7.1 Logging Strategy
 
-- **Distributed tracing** - Following requests across service boundaries
-- **Centralized logging** - Aggregating logs from all services
-- **Metrics collection** - Monitoring performance and health
-- **Alerting** - Proactive notification of issues
+**Centralised Logging:**
+- Structured logging with Serilog
+- Log aggregation with ELK Stack (Elasticsearch, Logstash, Kibana)
+- Correlation ID tracking across services
+- Log level configuration per environment
 
-## 8. Benefits of This Architecture
+### 7.2 Metrics and Monitoring
 
-### 8.1 Technical Benefits
+**Application Metrics:**
+- Custom business metrics
+- Performance counters
+- Error rates and response times
+- Resource utilisation
 
-- **Scalability** - Services can scale independently based on demand
-- **Resilience** - Failures in one service don't cascade to others
-- **Technology flexibility** - Different services can use different technologies when needed
-- **Independent deployment** - Teams can release without coordinating with others
-- **Improved fault isolation** - Issues are contained within service boundaries
+**Infrastructure Monitoring:**
+- Container and host metrics
+- Database performance
+- Message queue statistics
+- Network and storage metrics
 
-### 8.2 Business Benefits
+### 7.3 Distributed Tracing
 
-- **Faster time to market** - Teams can develop and deploy independently
-- **Better resource utilization** - Scale only what needs scaling
-- **Improved agility** - Make changes to services without system-wide impact
-- **Enhanced reliability** - More resilient to failures and better handling of load spikes
-- **Cost optimization** - Resource allocation based on actual needs
+**Implementation:**
+- OpenTelemetry integration
+- Jaeger for trace collection and visualisation
+- Correlation tracking across service boundaries
+- Performance bottleneck identification
 
-## 9. Implementation Roadmap
+## 8. Security Considerations
 
-1. **Foundation setup**
-   - Identity Server implementation
-   - API Gateway configuration
-   - RabbitMQ cluster deployment
+### 8.1 Authentication and Authorisation
 
-2. **Core services migration/implementation**
-   - Identify bounded contexts
-   - Define message contracts
-   - Implement initial services with Wolverine integration
+**JWT Token Security:**
+- Short-lived access tokens (15 minutes)
+- Long-lived refresh tokens (30 days)
+- Token rotation policies
+- Secure token storage recommendations
 
-3. **Integration and testing**
-   - End-to-end testing
-   - Load testing
-   - Security testing
+**Service-to-Service Security:**
+- Internal service authentication
+- Network policy enforcement
+- TLS for all internal communication
+- Secret management integration
 
-4. **Production deployment**
-   - Monitoring setup
-   - CI/CD pipeline implementation
-   - Gradual rollout
+### 8.2 Data Protection
 
-## 10. Conclusion
+**Encryption:**
+- TLS 1.3 for data in transit
+- Database encryption at rest
+- Sensitive data encryption in application
+- Key management through dedicated services
 
-This architecture provides a robust foundation for building scalable, resilient, and maintainable distributed systems using .NET technologies. By leveraging RabbitMQ for messaging and Wolverine.FX for message handling, we achieve a clean separation of concerns while maintaining the ability for services to communicate effectively.
+**Input Validation:**
+- Comprehensive input sanitisation
+- SQL injection prevention
+- XSS protection
+- CSRF token validation
 
-The pub/sub model enables a truly event-driven architecture where services can react to changes in other parts of the system without tight coupling. This results in a system that is easier to extend, maintain, and scale as business requirements evolve.
+## 9. Performance and Scalability
 
-The combination of synchronous (HTTP) and asynchronous (messaging) communication patterns provides flexibility in addressing different use cases while maintaining overall system integrity and performance.
+### 9.1 Caching Strategy
+
+**Multi-Level Caching:**
+- In-memory caching (Redis)
+- Database query optimisation
+- HTTP response caching
+- CDN integration for static content
+
+### 9.2 Scaling Patterns
+
+**Horizontal Scaling:**
+- Stateless service design
+- Load balancer integration
+- Database read replicas
+- Message broker clustering
+
+**Performance Optimisation:**
+- Database indexing strategies
+- Query optimisation
+- Connection pooling
+- Async/await patterns
+
+## 10. Disaster Recovery and Business Continuity
+
+### 10.1 Backup Strategy
+
+**Data Backup:**
+- Automated database backups
+- Point-in-time recovery capability
+- Cross-region backup replication
+- Backup verification procedures
+
+### 10.2 High Availability
+
+**Service Redundancy:**
+- Multi-instance deployments
+- Health check integration
+- Automatic failover mechanisms
+- Circuit breaker patterns
+
+**Infrastructure Resilience:**
+- Multi-zone deployments
+- Database clustering
+- Message broker high availability
+- Disaster recovery testing
+
+## 11. Future Considerations
+
+### 11.1 Planned Enhancements
+
+**Technical Improvements:**
+- GraphQL API gateway implementation
+- Event sourcing for audit capabilities
+- CQRS pattern for read/write separation
+- Machine learning integration for recommendations
+
+**Business Features:**
+- Real-time notifications
+- Advanced search capabilities
+- Mobile application development
+- Third-party integration APIs
+
+### 11.2 Technology Evolution
+
+**Monitoring Trends:**
+- Cloud-native technologies
+- Serverless computing integration
+- AI/ML service integration
+- Edge computing capabilities
+
+## 12. Conclusion
+
+This technical architecture provides a robust foundation for building and scaling The Marketplace API using modern microservices patterns. The combination of .NET 8, clean architecture principles, event-driven communication, and comprehensive DevOps practices creates a system that is maintainable, scalable, and resilient.
+
+The architecture supports independent team development while maintaining system coherence through well-defined contracts and communication patterns. The technology choices align with industry best practices and provide a clear path for future growth and enhancement.
+
+By implementing this design, The Marketplace platform will be positioned to handle increasing user loads, rapid feature development, and evolving business requirements while maintaining high levels of system reliability and developer productivity.

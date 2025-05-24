@@ -152,7 +152,7 @@ Save the returned JWT token - you'll need it for authenticated requests.
 ```bash
 curl -X POST http://localhost:5001/api/listings \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_JWT_TOKEN_HERE" \
+  -H "Authorisation: Bearer YOUR_JWT_TOKEN_HERE" \
   -d '{
     "title": "My First Listing",
     "description": "A test listing to verify the setup",
@@ -172,7 +172,7 @@ curl "http://localhost:5002/api/search?query=first+listing"
 For easier API testing, use the Swagger interfaces:
 
 1. **Open Swagger UI** for any service (e.g., http://localhost:5001/swagger)
-2. **Authenticate**: Click the "Authorize" button
+2. **Authenticate**: Click the "Authorise" button
 3. **Enter your token**: Format as `Bearer YOUR_JWT_TOKEN_HERE`
 4. **Test endpoints**: Expand any endpoint and click "Try it out"
 

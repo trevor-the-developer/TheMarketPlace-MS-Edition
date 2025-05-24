@@ -1,14 +1,33 @@
-# The Marketplace Microservices API Setup Guide
+# The Marketplace Microservices API Development Setup Guide
 
-This guide will help you run the Marketplace microservices solution on your development machine.
+This comprehensive guide will help you get the Marketplace microservices solution up and running on your development machine.
 
 ## Prerequisites
 
-- .NET 8.0 SDK
-- Docker and Docker Compose
-- Git
+Before starting, ensure you have the following installed:
 
-## Setup Instructions
+- **.NET 8.0 SDK** - [Download here](https://dotnet.microsoft.com/download/dotnet/8.0)
+- **Docker Desktop** - [Download here](https://www.docker.com/products/docker-desktop)
+- **Git** - [Download here](https://git-scm.com/downloads)
+- **Your preferred IDE** (Visual Studio, VS Code, or JetBrains Rider)
+
+### Verify Prerequisites
+
+Run these commands to verify your setup:
+
+```bash
+# Check .NET version (should show 8.0.x)
+dotnet --version
+
+# Check Docker
+docker --version
+docker-compose --version
+
+# Check Git
+git --version
+```
+
+## Quick Start
 
 ### 1. Clone the Repository
 
@@ -17,119 +36,318 @@ git clone <repository-url>
 cd the-marketplace-msapi
 ```
 
-### 2. Running the Solution
+### 2. Start the Complete Solution
 
-You have several options to run the solution:
-
-#### Option 1: Using Docker Compose (Recommended)
-
-This will start all services and their dependencies:
+The fastest way to get everything running:
 
 ```bash
-# Start all services with Docker Compose
+# Start all services and infrastructure
 ./run-dev.sh all
 ```
 
-#### Option 2: Start Infrastructure with Docker and Run Services Individually
-
-```bash
-# Start the infrastructure containers only
-docker-compose up -d postgres opensearch opensearch-dashboards
-
-# In separate terminals, run each service:
-# Terminal 1: Authentication Service
-./run-dev.sh auth
-
-# Terminal 2: Listing Service
-./run-dev.sh listing
-
-# Terminal 3: Search Service
-./run-dev.sh search
-```
-
-#### Option 3: Manual Setup
-
-```bash
-# Start infrastructure
-docker-compose up -d postgres opensearch opensearch-dashboards
-
-# In separate terminals:
-# Terminal 1
-cd src/Services/AuthenticationService/API/AuthenticationService.Api
-dotnet run --urls=http://localhost:5000
-
-# Terminal 2
-cd src/Services/ListingService/API/ListingService.Api
-dotnet run --urls=http://localhost:5001
-
-# Terminal 3
-cd src/Services/SearchService/API/SearchService.Api
-dotnet run --urls=http://localhost:5002
-```
-
-### 3. Accessing the Services
-
+**That's it!** All services will be available at:
 - Authentication Service: http://localhost:5000/swagger
 - Listing Service: http://localhost:5001/swagger  
 - Search Service: http://localhost:5002/swagger
 - OpenSearch Dashboard: http://localhost:5601
 
-### 4. Authentication Flow
+## Detailed Setup Options
 
-1. Register a user:
-   ```
-   POST to http://localhost:5000/api/register
-   {
-     "username": "testuser",
-     "email": "test@example.com",
-     "password": "Password123!"
-   }
-   ```
+### Option 1: Docker Compose (Recommended for Full Testing)
 
-2. Login to get a JWT token:
-   ```
-   POST to http://localhost:5000/api/login
-   {
-     "email": "test@example.com",
-     "password": "Password123!"
-   }
-   ```
+Start everything with a single command:
 
-3. Use the token for authenticated endpoints:
-   - In Swagger: Click "Authorize" and enter: `Bearer {your-token}`
-   - In Postman/cURL: Add header `Authorization: Bearer {your-token}`
+```bash
+# Start all services with their dependencies
+docker-compose up
+```
 
-### 5. Troubleshooting
+This approach:
+- ✅ Closest to production environment
+- ✅ No local .NET runtime issues
+- ✅ Easy cleanup with `docker-compose down`
+- ❌ Slower for active development (requires rebuilding for code changes)
 
-If you encounter issues:
+### Option 2: Hybrid Development Setup (Recommended for Active Development)
 
-- **OpenSearch errors**: Try removing the volume and starting again:
-  ```bash
-  docker-compose down
-  docker volume rm the-marketplace-msapi_opensearch-data
-  docker-compose up
-  ```
+Start infrastructure with Docker, run services locally for faster development:
 
-- **Database errors**: Ensure PostgreSQL is running and accessible:
-  ```bash
-  docker ps | grep postgres
-  ```
+```bash
+# Start only the infrastructure services
+docker-compose up -d postgres opensearch opensearch-dashboards
 
-- **Build errors**: Make sure you have the correct .NET SDK version:
-  ```bash
-  dotnet --version  # Should show 8.0.x
-  ```
+# Run services individually (in separate terminals)
+./run-dev.sh auth     # Terminal 1: Authentication Service
+./run-dev.sh listing  # Terminal 2: Listing Service  
+./run-dev.sh search   # Terminal 3: Search Service
+```
+
+This approach:
+- ✅ Fast development cycle (hot reload, debugging)
+- ✅ Real database and search engine
+- ✅ Easy to restart individual services
+- ❌ Requires multiple terminal windows
+
+### Option 3: Manual Setup (Full Control)
+
+For complete control over each service:
+
+```bash
+# 1. Start infrastructure
+docker-compose up -d postgres opensearch opensearch-dashboards
+
+# 2. Run each service manually (separate terminals)
+
+# Terminal 1: Authentication Service
+cd src/Services/AuthenticationService/API/AuthenticationService.Api
+dotnet run --urls=http://localhost:5000
+
+# Terminal 2: Listing Service
+cd src/Services/ListingService/API/ListingService.Api
+dotnet run --urls=http://localhost:5001
+
+# Terminal 3: Search Service
+cd src/Services/SearchService/API/SearchService.Api
+dotnet run --urls=http://localhost:5002
+```
+
+## Service Endpoints and Documentation
+
+| Service | URL | Swagger UI | Purpose |
+|---------|-----|------------|---------|
+| Authentication | http://localhost:5000 | http://localhost:5000/swagger | User registration, login, JWT tokens |
+| Listing | http://localhost:5001 | http://localhost:5001/swagger | Marketplace listings and categories |
+| Search | http://localhost:5002 | http://localhost:5002/swagger | Search across all marketplace content |
+| OpenSearch Dashboard | http://localhost:5601 | N/A | Search engine management and monitoring |
+
+## Getting Started with the API
+
+### Step 1: Register a User
+
+```bash
+curl -X POST http://localhost:5000/api/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "username": "testuser",
+    "email": "test@example.com",
+    "password": "Password123!"
+  }'
+```
+
+### Step 2: Login and Get JWT Token
+
+```bash
+curl -X POST http://localhost:5000/api/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "test@example.com",
+    "password": "Password123!"
+  }'
+```
+
+Save the returned JWT token - you'll need it for authenticated requests.
+
+### Step 3: Create Your First Listing
+
+```bash
+curl -X POST http://localhost:5001/api/listings \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN_HERE" \
+  -d '{
+    "title": "My First Listing",
+    "description": "A test listing to verify the setup",
+    "price": 99.99,
+    "location": "Test City"
+  }'
+```
+
+### Step 4: Search for Your Listing
+
+```bash
+curl "http://localhost:5002/api/search?query=first+listing"
+```
+
+## Using Swagger UI
+
+For easier API testing, use the Swagger interfaces:
+
+1. **Open Swagger UI** for any service (e.g., http://localhost:5001/swagger)
+2. **Authenticate**: Click the "Authorize" button
+3. **Enter your token**: Format as `Bearer YOUR_JWT_TOKEN_HERE`
+4. **Test endpoints**: Expand any endpoint and click "Try it out"
+
+## Development Workflow
+
+### Making Code Changes
+
+**For Docker Compose setup:**
+```bash
+# After making changes, rebuild and restart
+docker-compose down
+docker-compose up --build
+```
+
+**For Hybrid/Manual setup:**
+- Services running with `dotnet run` will automatically reload on code changes
+- Only restart if you change configuration or add new dependencies
+
+### Database Changes
+
+If you modify Entity Framework models:
+
+```bash
+# Navigate to the service with changes (e.g., ListingService)
+cd src/Services/ListingService/Infrastructure
+
+# Add a new migration
+dotnet ef migrations add YourMigrationName --startup-project ../API/ListingService.Api
+
+# Apply migrations (done automatically on startup, but you can run manually)
+dotnet ef database update --startup-project ../API/ListingService.Api
+```
+
+### Viewing Logs
+
+**Docker Compose:**
+```bash
+# View logs for all services
+docker-compose logs -f
+
+# View logs for specific service
+docker-compose logs -f listingservice
+```
+
+**Individual Services:**
+Logs appear directly in the terminal where you ran `dotnet run`
+
+## Troubleshooting
+
+### Common Issues and Solutions
+
+**🔥 OpenSearch fails to start**
+```bash
+# Remove the data volume and restart
+docker-compose down
+docker volume rm the-marketplace-msapi_opensearch-data
+docker-compose up -d opensearch
+```
+
+**🔥 Port already in use**
+```bash
+# Find what's using the port (replace 5000 with your port)
+lsof -i :5000  # On macOS/Linux
+netstat -ano | findstr :5000  # On Windows
+
+# Kill the process or change the port in your configuration
+```
+
+**🔥 Database connection errors**
+```bash
+# Check if PostgreSQL is running
+docker ps | grep postgres
+
+# View PostgreSQL logs
+docker-compose logs postgres
+
+# Reset the database
+docker-compose down
+docker volume rm the-marketplace-msapi_postgres-data
+docker-compose up -d postgres
+```
+
+**🔥 JWT token expired**
+- Tokens expire after a set time (check AuthenticationService configuration)
+- Simply login again to get a fresh token
+
+**🔥 Build errors**
+```bash
+# Clean and restore packages
+dotnet clean
+dotnet restore
+
+# Check .NET version
+dotnet --version  # Should show 8.0.x
+
+# Update packages if needed
+dotnet list package --outdated
+```
+
+**🔥 Services can't communicate**
+- Ensure all services are running on correct ports
+- Check firewall settings
+- Verify Docker network configuration with `docker network ls`
+
+### Health Checks
+
+Check if services are healthy:
+
+```bash
+# Quick health check for all services
+curl http://localhost:5000/health  # Authentication Service
+curl http://localhost:5001/health  # Listing Service
+curl http://localhost:5002/health  # Search Service
+```
+
+### Reset Everything
+
+If you need a completely fresh start:
+
+```bash
+# Stop all containers and remove volumes
+docker-compose down -v
+
+# Remove any orphaned containers
+docker container prune
+
+# Remove unused images (optional)
+docker image prune
+
+# Restart everything
+docker-compose up
+```
 
 ## Architecture Overview
 
-The solution follows a microservices architecture with:
+The solution follows a microservices architecture with clean separation of concerns:
 
-- **AuthenticationService**: Handles user authentication and authorization
-- **ListingService**: Manages marketplace listings and categories
-- **SearchService**: Provides search functionality using OpenSearch
+### Services
 
-Each service follows Clean Architecture principles with:
-- Domain layer (entities)
-- Application layer (commands/queries)
-- Infrastructure layer (persistence)
-- API layer (controllers)
+- **AuthenticationService**: User registration, login, JWT token management
+- **ListingService**: Marketplace listings, categories, and business rules
+- **SearchService**: Full-text search capabilities using OpenSearch
+
+### Infrastructure
+
+- **PostgreSQL**: Primary database for all services
+- **OpenSearch**: Search engine and analytics
+- **Azure Service Bus**: Event-driven communication between services (when configured)
+
+### Architecture Patterns
+
+Each service implements:
+- **Clean Architecture**: Domain → Application → Infrastructure → API layers
+- **CQRS**: Command Query Responsibility Segregation with MediatR
+- **Event-Driven Design**: Services publish/consume events for loose coupling
+- **Repository Pattern**: Data access abstraction
+- **Dependency Injection**: Loose coupling and testability
+
+## Next Steps
+
+Once you have the solution running:
+
+1. **Explore the API**: Use Swagger UI to test different endpoints
+2. **Check the code**: Review the clean architecture implementation
+3. **Add features**: Create new endpoints or modify existing ones
+4. **Run tests**: Execute `dotnet test` to run the test suite
+5. **Monitor with OpenSearch**: Use the dashboard to see indexed data
+
+## Getting Help
+
+If you encounter issues not covered in this guide:
+
+1. Check the service logs for detailed error messages
+2. Review the project documentation in `/docs`
+3. Ensure all prerequisites are correctly installed
+4. Try the "Reset Everything" steps for a clean slate
+
+Happy coding! 🚀

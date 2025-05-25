@@ -218,7 +218,7 @@ public class ServiceIntegrationTests : IntegrationTestBase
     }
 
     [Fact]
-    public async Task Services_Should_Gracefully_Handle_Invalid_Configuration()
+    public void Services_Should_Gracefully_Handle_Invalid_Configuration()
     {
         // Arrange - Factory with invalid configuration
         var factory = new WebApplicationFactory<ListingService.Api.Program>()

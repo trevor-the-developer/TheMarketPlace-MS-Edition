@@ -15,8 +15,10 @@ builder.Services.AddControllers();
 // Configure settings
 var authServiceConfiguration = builder.Configuration
     .GetSection("AuthenticationService")
-    .Get<AuthenticationServiceConfiguration>();
+    .Get<AuthenticationServiceConfiguration>() 
+    ?? throw new InvalidOperationException("AuthenticationService configuration section is missing or invalid");
 
+// Now authServiceConfiguration is guaranteed to be non-null
 builder.Services.AddSingleton(authServiceConfiguration);
 
 // Application services

@@ -16,7 +16,7 @@ namespace Demo.IntegrationTests.Core.Hangfire;
 public class HangfireIntegrationTests : IntegrationTestBase
 {
     [Fact]
-    public async Task Hangfire_Should_Initialize_With_PostgreSQL_Storage()
+    public void Hangfire_Should_Initialize_With_PostgreSQL_Storage()
     {
         // Arrange
         var services = CreateTestServices();
@@ -170,7 +170,7 @@ public class HangfireIntegrationTests : IntegrationTestBase
     }
 
     [Fact]
-    public async Task Hangfire_Jobs_Should_Be_Enqueueable()
+    public void Hangfire_Jobs_Should_Be_Enqueueable()
     {
         // Arrange
         var services = CreateTestServices();
@@ -197,7 +197,7 @@ public class HangfireIntegrationTests : IntegrationTestBase
     }
 
     [Fact]
-    public async Task Hangfire_Should_Support_Job_Queues_And_Priorities()
+    public void Hangfire_Should_Support_Job_Queues_And_Priorities()
     {
         // Arrange
         var services = CreateTestServices();
@@ -221,7 +221,7 @@ public class HangfireIntegrationTests : IntegrationTestBase
         defaultJobId.Should().NotBe(criticalJobId);
     }
 
-    public static void TestMethod(string parameter)
+    internal static void TestMethod(string parameter)
     {
         // Test method for Hangfire job enqueueing
         Console.WriteLine($"Executed with parameter: {parameter}");

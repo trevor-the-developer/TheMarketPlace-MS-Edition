@@ -48,7 +48,7 @@ public class DatabaseIntegrationTests : IntegrationTestBase
         await using var selectCmd = new NpgsqlCommand(
             "SELECT name FROM test_table WHERE id = @id", 
             connection);
-        selectCmd.Parameters.AddWithValue("id", insertedId);
+        selectCmd.Parameters.AddWithValue("id", insertedId ?? throw new ArgumentNullException(nameof(insertedId)));
         
         var retrievedName = await selectCmd.ExecuteScalarAsync();
 

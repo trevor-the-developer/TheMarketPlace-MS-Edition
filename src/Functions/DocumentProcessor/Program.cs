@@ -71,6 +71,11 @@ app.MapControllers();
 
 app.Run();
 
+namespace DocumentProcessor
+{
+    public partial class Program { }
+}
+
 public class HangfireAuthorizationFilter : IDashboardAuthorizationFilter
 {
     public bool Authorize(DashboardContext context) => true; // Allow all in development

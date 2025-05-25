@@ -119,3 +119,8 @@ app.UseCors();
 app.MapControllers();
 
 app.Run();
+
+namespace ListingService.Api
+{
+    public partial class Program { }
+}

@@ -104,26 +104,26 @@ public class HangfireIntegrationTests : IntegrationTestBase
         // Setup configuration
         var config = new DocumentProcessorServiceConfiguration
         {
-            MongoDbSettings = new Services.Core.Extensions.Settings.MongoDb.MongoDbSettings
+            MongoDbSettings = new global::Services.Core.Extensions.Settings.MongoDb.MongoDbSettings
             {
                 ConnectionString = MongoDbConnectionString,
                 DatabaseName = "test_checklist_db"
             },
-            MinIOSettings = new Services.Core.Extensions.Settings.MinIO.MinIOSettings
+            MinIOSettings = new global::Services.Core.Extensions.Settings.MinIO.MinIOSettings
             {
                 Endpoint = MinioEndpoint,
                 AccessKey = "minioadmin",
                 SecretKey = "minioadmin",
                 UseSSL = false
             },
-            RabbitMQSettings = new Services.Core.Extensions.Settings.RabbitMQ.RabbitMQSettings
+            RabbitMQSettings = new global::Services.Core.Extensions.Settings.RabbitMQ.RabbitMQSettings
             {
                 Host = RabbitMqContainer.Hostname,
                 Username = "guest",
                 Password = "guest",
                 Port = RabbitMqContainer.GetMappedPublicPort(5672)
             },
-            PostgresSqlSettings = new Services.Core.Extensions.Settings.PostgresSql.PostgresSqlSettings
+            PostgresSqlSettings = new global::Services.Core.Extensions.Settings.PostgresSql.PostgresSqlSettings
             {
                 ConnectionString = PostgreSqlConnectionString
             }

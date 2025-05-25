@@ -1,6 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# 
+#
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{4832FE58-B6BC-480F-BEED-6E1335612A61}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Services", "Services", "{D1508064-AC1B-473B-B659-E6512671F951}"
@@ -70,8 +70,6 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Infrastructure", "Infrastructure", "{5B1A7615-5E98-47A3-B89E-2C36B904561F}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AuthenticationService.Persistence", "src\Services\AuthenticationService\Infrastructure\AuthenticationService.Persistence\AuthenticationService.Persistence.csproj", "{E5233D96-623F-4B8F-88B4-3E4B0055F6C7}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Core", "Core", "{F7B8E432-1234-4567-8901-123456789ABC}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Demo.IntegrationTests.Core", "tests\Demo.IntegrationTests\Core\Demo.IntegrationTests.Core.csproj", "{A1B2C3D4-5678-9012-3456-789012345678}"
 EndProject
@@ -172,5 +170,7 @@ Global
 		{E5233D96-623F-4B8F-88B4-3E4B0055F6C7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E5233D96-623F-4B8F-88B4-3E4B0055F6C7}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E5233D96-623F-4B8F-88B4-3E4B0055F6C7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A1B2C3D4-5678-9012-3456-789012345678}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A1B2C3D4-5678-9012-3456-789012345678}.Debug|Any CPU.Build.0 = Debug|Any CPU
 	EndGlobalSection
 EndGlobal

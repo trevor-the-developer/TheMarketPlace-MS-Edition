@@ -38,3 +38,8 @@ app.MapControllers();
 app.UseCors();
 
 app.Run();
+
+namespace SearchService.Api
+{
+    public partial class Program { }
+}

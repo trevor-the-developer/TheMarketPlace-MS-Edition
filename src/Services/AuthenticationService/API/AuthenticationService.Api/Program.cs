@@ -95,3 +95,8 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+namespace AuthenticationService.Api
+{
+    public partial class Program { }
+}

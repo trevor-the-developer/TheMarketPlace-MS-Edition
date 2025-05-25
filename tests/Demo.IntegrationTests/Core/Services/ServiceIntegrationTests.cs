@@ -25,7 +25,7 @@ public class ServiceIntegrationTests : IntegrationTestBase
                     // Override connection strings with test containers
                     services.Configure<AuthenticationService.Application.Settings.AuthenticationServiceConfiguration>(config =>
                     {
-                        config.PostgresSqlSettings.ConnectionString = PostgreSqlConnectionString;
+                        config.ConnectionString = PostgreSqlConnectionString;
                     });
                 });
                 
@@ -50,12 +50,21 @@ public class ServiceIntegrationTests : IntegrationTestBase
                 builder.ConfigureServices(services =>
                 {
                     // Override connection strings with test containers
-                    services.PostConfigure<ListingService.Application.Settings.ListingServiceConfiguration>(config =>
+                    var testConfig = new ListingService.Application.Settings.ListingServiceConfiguration
                     {
-                        config.PostgresSqlSettings.ConnectionString = PostgreSqlConnectionString;
-                        config.RabbitMQSettings.Host = RabbitMqContainer.Hostname;
-                        config.RabbitMQSettings.Port = RabbitMqContainer.GetMappedPublicPort(5672);
-                    });
+                        PostgresSqlSettings = new global::Services.Core.Extensions.Settings.PostgresSql.PostgresSqlSettings
+                        {
+                            ConnectionString = PostgreSqlConnectionString
+                        },
+                        RabbitMQSettings = new global::Services.Core.Extensions.Settings.RabbitMQ.RabbitMQSettings
+                        {
+                            Host = RabbitMqContainer.Hostname,
+                            Port = RabbitMqContainer.GetMappedPublicPort(5672),
+                            Username = "guest",
+                            Password = "guest"
+                        }
+                    };
+                    services.AddSingleton(testConfig);
                 });
                 
                 builder.UseEnvironment("Testing");
@@ -90,13 +99,26 @@ public class ServiceIntegrationTests : IntegrationTestBase
                 builder.ConfigureServices(services =>
                 {
                     // Override connection strings with test containers
-                    services.PostConfigure<SearchService.Application.Settings.SearchServiceConfiguration>(config =>
+                    var testConfig = new SearchService.Application.Settings.SearchServiceConfiguration
                     {
-                        config.MongoDbSettings.ConnectionString = MongoDbConnectionString;
-                        config.RabbitMQSettings.Host = RabbitMqContainer.Hostname;
-                        config.RabbitMQSettings.Port = RabbitMqContainer.GetMappedPublicPort(5672);
-                        config.OpenSearchSettings.Uri = "http://localhost:9200"; // Mock for this test
-                    });
+                        MongoDbSettings = new global::Services.Core.Extensions.Settings.MongoDb.MongoDbSettings
+                        {
+                            ConnectionString = MongoDbConnectionString,
+                            DatabaseName = "test"
+                        },
+                        RabbitMQSettings = new global::Services.Core.Extensions.Settings.RabbitMQ.RabbitMQSettings
+                        {
+                            Host = RabbitMqContainer.Hostname,
+                            Port = RabbitMqContainer.GetMappedPublicPort(5672),
+                            Username = "guest",
+                            Password = "guest"
+                        },
+                        OpenSearchSettings = new SearchService.Application.Settings.OpenSearchSettings
+                        {
+                            Uri = "http://localhost:9200"
+                        }
+                    };
+                    services.AddSingleton(testConfig);
                 });
                 
                 builder.UseEnvironment("Testing");
@@ -121,15 +143,33 @@ public class ServiceIntegrationTests : IntegrationTestBase
             {
                 builder.ConfigureServices(services =>
                 {
-                    // Override connection strings with test containers
-                    services.PostConfigure<DocumentProcessor.Settings.DocumentProcessorServiceConfiguration>(config =>
+                    // Override configuration with test container settings
+                    var testConfig = new DocumentProcessor.Settings.DocumentProcessorServiceConfiguration
                     {
-                        config.PostgresSqlSettings.ConnectionString = PostgreSqlConnectionString;
-                        config.MongoDbSettings.ConnectionString = MongoDbConnectionString;
-                        config.RabbitMQSettings.Host = RabbitMqContainer.Hostname;
-                        config.RabbitMQSettings.Port = RabbitMqContainer.GetMappedPublicPort(5672);
-                        config.MinIOSettings.Endpoint = MinioEndpoint;
-                    });
+                        PostgresSqlSettings = new global::Services.Core.Extensions.Settings.PostgresSql.PostgresSqlSettings
+                        {
+                            ConnectionString = PostgreSqlConnectionString
+                        },
+                        MongoDbSettings = new global::Services.Core.Extensions.Settings.MongoDb.MongoDbSettings
+                        {
+                            ConnectionString = MongoDbConnectionString,
+                            DatabaseName = "test"
+                        },
+                        RabbitMQSettings = new global::Services.Core.Extensions.Settings.RabbitMQ.RabbitMQSettings
+                        {
+                            Host = RabbitMqContainer.Hostname,
+                            Port = RabbitMqContainer.GetMappedPublicPort(5672),
+                            Username = "guest",
+                            Password = "guest"
+                        },
+                        MinIOSettings = new global::Services.Core.Extensions.Settings.MinIO.MinIOSettings
+                        {
+                            Endpoint = MinioEndpoint,
+                            AccessKey = "minioadmin",
+                            SecretKey = "minioadmin"
+                        }
+                    };
+                    services.AddSingleton(testConfig);
                 });
                 
                 builder.UseEnvironment("Testing");
@@ -186,10 +226,22 @@ public class ServiceIntegrationTests : IntegrationTestBase
             {
                 builder.ConfigureServices(services =>
                 {
-                    services.PostConfigure<ListingService.Application.Settings.ListingServiceConfiguration>(config =>
+                    // Override configuration with invalid connection string to test error handling
+                    var testConfig = new ListingService.Application.Settings.ListingServiceConfiguration
                     {
-                        config.PostgresSqlSettings.ConnectionString = "invalid connection string";
-                    });
+                        PostgresSqlSettings = new global::Services.Core.Extensions.Settings.PostgresSql.PostgresSqlSettings
+                        {
+                            ConnectionString = "invalid connection string"
+                        },
+                        RabbitMQSettings = new global::Services.Core.Extensions.Settings.RabbitMQ.RabbitMQSettings
+                        {
+                            Host = "localhost",
+                            Port = 5672,
+                            Username = "guest",
+                            Password = "guest"
+                        }
+                    };
+                    services.AddSingleton(testConfig);
                 });
                 
                 builder.UseEnvironment("Testing");

@@ -8,16 +8,16 @@ public class Item : Entity
 {
     public string Identifier { get; set; } = string.Empty;
     
-    // e.g. Daniel Youd, Volvo M63 LRN
+    // e.g. Daniel Youd, Antique Desk, Gaming Computer
     public required string Name { get; set; }
     
-    // e.g. Driver, Vehicle, Report, Checklist
+    // e.g. Checklist, Listing
     public required string Type { get; set; }
     
     // e.g. Guid
     public required string AccountId { get; set; }
     
-    // e.g. /api/drivers/1234567890
+    // e.g. /api/listings/1234567890
     public required string ResourceUrl { get; set; } 
     
     public bool IsActive { get; set; }

@@ -27,12 +27,6 @@ public static class MessageBusServiceRegistrationExtension
                     h.Password(serviceConfiguration.RabbitMQSettings.Password);
                 });
                 
-                // Driver events
-                cfg.ReceiveEndpoint(ServiceBusConstants.Topics.Driver.Subscriptions.SearchService, e =>
-                {
-                    e.ConfigureConsumer<DriverCreatedConsumer>(context);
-                });
-                
                 // Listing events
                 cfg.ReceiveEndpoint(ServiceBusConstants.Topics.Listing.Subscriptions.SearchServiceCreated, e =>
                 {

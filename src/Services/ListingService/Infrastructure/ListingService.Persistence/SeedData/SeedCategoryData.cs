@@ -20,9 +20,8 @@ public class SeedCategoryData
                 var electronics = new Category { Name = "Electronics", Description = "Electronic devices and gadgets" };
                 var clothing = new Category { Name = "Clothing", Description = "Apparel and fashion items" };
                 var homeGarden = new Category { Name = "Home & Garden", Description = "Home decor, furniture, and garden supplies" };
-                var vehicles = new Category { Name = "Vehicles", Description = "Cars, motorcycles, and other vehicles" };
                 
-                await context.Categories.AddRangeAsync(new[] { electronics, clothing, homeGarden, vehicles });
+                await context.Categories.AddRangeAsync(new[] { electronics, clothing, homeGarden });
                 await context.SaveChangesAsync();
                 
                 // Create subcategories for Electronics
@@ -40,17 +39,11 @@ public class SeedCategoryData
                 var kitchenAppliances = new Category { Name = "Kitchen Appliances", Description = "Cookware, cutlery, and small appliances", ParentCategoryId = homeGarden.Id };
                 var gardenSupplies = new Category { Name = "Garden Supplies", Description = "Tools, plants, and outdoor furniture", ParentCategoryId = homeGarden.Id };
                 
-                // Create subcategories for Vehicles
-                var cars = new Category { Name = "Cars", Description = "Automobiles for sale", ParentCategoryId = vehicles.Id };
-                var motorcycles = new Category { Name = "Motorcycles", Description = "Motorcycles and scooters", ParentCategoryId = vehicles.Id };
-                var parts = new Category { Name = "Parts & Accessories", Description = "Vehicle parts and accessories", ParentCategoryId = vehicles.Id };
-                
                 await context.Categories.AddRangeAsync(new[] 
                 { 
                     smartphones, computers, audioVideo,
                     menClothing, womenClothing, accessories,
-                    furniture, kitchenAppliances, gardenSupplies,
-                    cars, motorcycles, parts
+                    furniture, kitchenAppliances, gardenSupplies
                 });
                 
                 await context.SaveChangesAsync();

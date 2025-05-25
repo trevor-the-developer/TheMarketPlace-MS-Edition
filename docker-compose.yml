@@ -7,6 +7,12 @@ services:
       - 5432:5432
     volumes:
       - postgres-data:/var/lib/postgresql/data
+      - ./postgres-init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   opensearch:
     image: opensearchproject/opensearch:2.5.0
@@ -48,6 +54,11 @@ services:
       - 15672:15672
     volumes:
       - rabbitmq-data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "check_port_connectivity"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   minio:
     image: minio/minio
@@ -86,13 +97,16 @@ services:
       - VSTEST_HOST_DEBUG=1
       - DOTNET_RUNNING_IN_CONTAINER=true
       - ASPNETCORE_Kestrel__Endpoints__Http__Url=http://+:5001
+      - ApplicationConfiguration__RabbitMQSettings__Host=rabbitmq
+      - ApplicationConfiguration__PostgresSqlSettings__ConnectionString=Server=postgres:5432;User Id=postgres;Password=postgrespw;Database=listings
     ports:
       - 5001:5001
     volumes:
       - ~/.nuget/packages:/root/.nuget/packages:ro
       - .:/src
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
 
   search-svc:
     image: demo/search-svc:latest
@@ -103,10 +117,16 @@ services:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=http://+:5002
       - OpenSearch__Uri=http://opensearch:9200
+      - ApplicationConfiguration__RabbitMQSettings__Host=rabbitmq
+      - ApplicationConfiguration__MongoDbSettings__ConnectionString=mongodb://root:mongopw@mongodb:27017
+      - ApplicationConfiguration__OpenSearchSettings__Uri=http://opensearch:9200
     ports:
       - 5002:5002
     depends_on:
-      - opensearch
+      opensearch:
+        condition: service_started
+      rabbitmq:
+        condition: service_healthy
 
   auth-svc:
     image: demo/auth-svc:latest
@@ -120,7 +140,8 @@ services:
     ports:
       - 5000:5000
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
 
   document-processor:
     image: demo/document-processor:latest
@@ -137,10 +158,14 @@ services:
     ports:
       - 5003:5003
     depends_on:
-      - postgres
-      - rabbitmq
-      - mongodb
-      - minio
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      mongodb:
+        condition: service_started
+      minio:
+        condition: service_started
 
 volumes:
   postgres-data:

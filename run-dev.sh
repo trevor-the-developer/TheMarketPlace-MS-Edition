@@ -2,7 +2,7 @@
 
 # Start infrastructure containers
 echo "Starting infrastructure containers (PostgreSQL, OpenSearch, RabbitMQ, MongoDB, MinIO)..."
-docker-compose up -d postgres opensearch opensearch-dashboards rabbitmq mongodb minio
+docker compose up -d postgres opensearch opensearch-dashboards rabbitmq mongodb minio
 
 # Wait for the containers to be ready
 echo "Waiting for infrastructure containers to be ready..."
@@ -33,7 +33,7 @@ elif [ "$1" == "docs" ]; then
   run_service "DocumentProcessor" "src/Functions/DocumentProcessor" 5003
 elif [ "$1" == "all" ]; then
   echo "Starting all services with Docker Compose..."
-  docker-compose up --build
+  docker compose up --build
 else
   echo "Usage: $0 [auth|listing|search|docs|all]"
   echo "  auth    - Run the Authentication Service"

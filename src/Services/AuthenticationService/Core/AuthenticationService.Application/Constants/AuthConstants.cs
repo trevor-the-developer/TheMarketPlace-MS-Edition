@@ -28,6 +28,7 @@ public static class AuthConstants
     public const string RegistrationFailed = "Registration failed.";
     public const string RegistrationSucceeded = "Registration succeeded.";
     public const string ConfirmationFailed = "Email confirmation failed.";
-    public const string ConfirmationSucceeded = "Email confirmation succeeded.";
+    public const string ConfirmationSucceeded = "Email confirmed successfully.";
     public const string ConfirmationCodeInvalid = "Confirmation code is invalid.";
+    public const string EmailNotConfirmed = "Email not confirmed.";
 }

@@ -78,15 +78,14 @@ public class RegisterCommandHandler : IRequestHandler<RegisterCommand, RegisterR
 
         // Generate email confirmation token
         var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
-        var encodedToken = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(token));
-
+        
         _logger.LogInformation(AppAuthConstants.RegistrationSucceeded);
         
         return new RegisterResponse
         {
             RegistrationStepOne = true,
             Email = request.Email,
-            ConfirmationToken = encodedToken
+            ConfirmationToken = token
         };
     }
 }

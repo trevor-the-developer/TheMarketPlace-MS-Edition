@@ -43,11 +43,8 @@ public class ConfirmEmailCommandHandler : IRequestHandler<ConfirmEmailCommand, C
             };
         }
 
-        // Decode token
-        var decodedToken = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(request.Token));
-
         // Confirm email
-        var result = await _userManager.ConfirmEmailAsync(user, decodedToken);
+        var result = await _userManager.ConfirmEmailAsync(user, request.Token);
         if (!result.Succeeded)
         {
             _logger.LogError(AppAuthConstants.ConfirmationFailed);

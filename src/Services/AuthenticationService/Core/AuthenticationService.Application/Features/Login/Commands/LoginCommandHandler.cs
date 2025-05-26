@@ -66,14 +66,14 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, LoginResponse>
         }
 
         // Check if email is confirmed
-        if (user.EmailConfirmed.HasValue && !user.EmailConfirmed.Value)
+        if (!user.EmailConfirmed)
         {
             _logger.LogError(AppAuthConstants.UserEmailNotConfirmed);
             return new LoginResponse
             {
                 ApiError = new ApiError(
                     httpStatusCode: AppStatusCodes.Status401Unauthorized.ToString(),
-                    statusCode: AppStatusCodes.Status401Unauthorized,
+                    statusCode: AppStatusCodes.EmailNotConfirmed,
                     errorMessage: AppAuthConstants.UserEmailNotConfirmed
                 )
             };

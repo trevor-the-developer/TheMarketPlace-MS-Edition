@@ -183,7 +183,7 @@ Listing Service → RabbitMQ → Search Service
                → RabbitMQ → Document Processor
                → RabbitMQ → Notification Service (future)
 ```
-![Message Flow](assets/event-driven-message-flow.png)
+![Message Flow](../../assets/event-driven-message-flow.png)
 
 **Event Flow Example:**
 1. User creates a new listing via Listing Service

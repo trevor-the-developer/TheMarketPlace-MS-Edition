@@ -1,6 +1,10 @@
 # The Marketplace Microservices API - Technical Design Document v2.0
 
-## Executive Summary
+![Marketplace Microservices Architecture](../../assets/themarketplace-ms-arch.png)
+![Clean Archtecture Benefits](../../assets/clean-architecture.png)
+![Message Flow](../../assets/event-driven-message-flow.png)
+
+## Summary
 
 **TL;DR:** A modern, event-driven microservices platform built on .NET 8 that provides a scalable marketplace solution with unified API access, real-time capabilities, and clean architecture patterns.
 

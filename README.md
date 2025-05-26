@@ -1,5 +1,5 @@
 # The Marketplace Microservices API Development Setup Guide
-
+![Message Flow](../../assets/themarketplace-ms-arch.png)
 This comprehensive guide will help you get the Marketplace microservices solution up and running on your development machine.
 
 ## Prerequisites

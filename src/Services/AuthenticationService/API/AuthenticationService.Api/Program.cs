@@ -10,6 +10,9 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Hangfire;
+using Hangfire.PostgreSql;
+using Services.Core.DatabaseContext;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -30,6 +33,17 @@ builder.Services.AddApplicationServices();
 
 // Persistence services
 builder.Services.AddPersistenceServices(authServiceConfiguration);
+
+// Add Hangfire DbContext for database creation
+builder.Services.AddDbContext<HangfireDbContext>(options =>
+    options.UseNpgsql($"Server=postgres:5432;Database=hangfire;User Id=postgres;Password=postgrespw;"));
+
+// Add Hangfire services (minimal setup for database creation only)
+builder.Services.AddHangfire(config =>
+{
+    config.UsePostgreSqlStorage(c => 
+        c.UseNpgsqlConnection("Server=postgres:5432;Database=hangfire;User Id=postgres;Password=postgrespw;"));
+});
 
 // JWT authentication
 JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
@@ -86,18 +100,26 @@ builder.Services.AddSwaggerGen(c =>
 
 var app = builder.Build();
 
-// Apply migrations
+// Apply migrations for both Auth and Hangfire databases
 try
 {
     using (var scope = app.Services.CreateScope())
     {
-        var context = scope.ServiceProvider.GetRequiredService<AuthenticationDbContext>();
-        var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
         var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
         
-        logger.LogInformation("Applying database migrations...");
-        context.Database.Migrate();
-        logger.LogInformation("Database migrations applied successfully.");
+        // Auth database migration
+        var authContext = scope.ServiceProvider.GetRequiredService<AuthenticationDbContext>();
+        var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+        
+        logger.LogInformation("Applying authentication database migrations...");
+        authContext.Database.Migrate();
+        logger.LogInformation("Authentication database migrations applied successfully.");
+        
+        // Hangfire database migration
+        var hangfireContext = scope.ServiceProvider.GetRequiredService<HangfireDbContext>();
+        logger.LogInformation("Applying Hangfire database migrations...");
+        hangfireContext.Database.Migrate();
+        logger.LogInformation("Hangfire database migrations applied successfully.");
         
         // Seed roles
         logger.LogInformation("Seeding role data...");
@@ -128,6 +150,7 @@ app.MapControllers();
 
 app.Run();
 
+// exposing this class to tests
 namespace AuthenticationService.Api
 {
     public partial class Program { }

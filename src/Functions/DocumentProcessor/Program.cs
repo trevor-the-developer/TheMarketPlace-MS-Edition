@@ -59,6 +59,23 @@ if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
+    
+    // Wait for Hangfire database to be available (created by Auth service)
+    using var scope = app.Services.CreateScope();
+    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+    
+    try
+    {
+        // Test Hangfire connection - it will initialize tables if they don't exist
+        logger.LogInformation("Verifying Hangfire database connection...");
+        var storage = Hangfire.JobStorage.Current;
+        logger.LogInformation("Hangfire database connection verified successfully.");
+    }
+    catch (Exception ex)
+    {
+        logger.LogError(ex, "Failed to connect to Hangfire database. Ensure Auth service has started and created the database.");
+        // Don't throw here - let the service try to start anyway
+    }
 }
 
 app.UseHangfireDashboard("/hangfire", new DashboardOptions

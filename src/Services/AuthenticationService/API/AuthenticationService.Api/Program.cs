@@ -4,7 +4,9 @@ using AuthenticationService.Application.Extensions;
 using AuthenticationService.Application.Settings;
 using AuthenticationService.Persistence.DatabaseContext;
 using AuthenticationService.Persistence.Extensions;
+using AuthenticationService.Persistence.SeedData;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -90,11 +92,17 @@ try
     using (var scope = app.Services.CreateScope())
     {
         var context = scope.ServiceProvider.GetRequiredService<AuthenticationDbContext>();
+        var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
         var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
         
         logger.LogInformation("Applying database migrations...");
         context.Database.Migrate();
         logger.LogInformation("Database migrations applied successfully.");
+        
+        // Seed roles
+        logger.LogInformation("Seeding role data...");
+        await SeedRoleData.SeedRolesAsync(roleManager, logger);
+        logger.LogInformation("Role seeding completed.");
     }
 }
 catch (Exception ex)

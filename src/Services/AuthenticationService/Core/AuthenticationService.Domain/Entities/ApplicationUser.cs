@@ -14,7 +14,7 @@ public class ApplicationUser : IdentityUser
 
 public enum Role
 {
-    Admin,
-    User,
-    Seller
+    User = 0,   // Maps to role ID 2 in the database
+    Seller = 1, // Maps to role ID 3 in the database
+    Admin = 2   // Maps to role ID 1 in the database
 }

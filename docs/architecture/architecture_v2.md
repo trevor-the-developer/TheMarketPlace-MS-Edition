@@ -3,10 +3,10 @@
 ## This repository presents a microservices architecture hosting The Marketplace API and implementing service-based best practices with .NET 8, RabbitMQ, and MassTransit.
 
 ### Architecture Diagram
-![Marketplace Microservices Architecture](../../assets/themarketplace-ms-arch.png)
+![Marketplace Microservices Architecture](assets/themarketplace-ms-arch.png)
 
 ## Architecture Overview
-![Clean Archtecture Benefits](../../assets/clean-architecture.png)
+![Clean Archtecture Benefits](assets/clean-architecture.png)
 
 The diagram illustrates a modern, event-driven microservices architecture built on .NET 8 with RabbitMQ and MassTransit for reliable messaging, implementing clean architecture principles throughout all services.
 
@@ -183,7 +183,7 @@ Listing Service → RabbitMQ → Search Service
                → RabbitMQ → Document Processor
                → RabbitMQ → Notification Service (future)
 ```
-![Message Flow](../../assets/event-driven-message-flow.png)
+![Message Flow](assets/event-driven-message-flow.png)
 
 **Event Flow Example:**
 1. User creates a new listing via Listing Service

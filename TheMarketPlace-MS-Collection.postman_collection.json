@@ -17,16 +17,20 @@
 							"listen": "test",
 							"script": {
 								"exec": [
-									"pm.test(\"Status code is 201 Created\", function () {",
-									"    pm.response.to.have.status(201);",
+									"pm.test(\"Status code is 200 OK\", function () {",
+									"    pm.response.to.have.status(200);",
 									"});",
 									"",
-									"pm.test(\"Response contains user data\", function () {",
+									"pm.test(\"Response contains registration data\", function () {",
 									"    var jsonData = pm.response.json();",
-									"    pm.expect(jsonData).to.have.property('userId');",
-									"    pm.expect(jsonData).to.have.property('username');",
-									"    pm.expect(jsonData).to.have.property('email');",
-									"    pm.expect(jsonData.email).to.eql(pm.environment.get(\"userEmail\"));",
+									"    pm.expect(jsonData.status).to.eql(0);",
+									"    pm.expect(jsonData.data).to.have.property('registrationStepOne');",
+									"    pm.expect(jsonData.data).to.have.property('email');",
+									"    pm.expect(jsonData.data).to.have.property('confirmationToken');",
+									"    pm.expect(jsonData.data.email).to.eql(pm.environment.get(\"userEmail\"));",
+									"    ",
+									"    // Save confirmation token for next step",
+									"    pm.environment.set(\"confirmationToken\", jsonData.data.confirmationToken);",
 									"});"
 								],
 								"type": "text/javascript"
@@ -43,20 +47,69 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"username\": \"{{username}}\",\n    \"email\": \"{{userEmail}}\",\n    \"password\": \"{{userPassword}}\"\n}"
+							"raw": "{\n    \"firstName\": \"{{firstName}}\",\n    \"lastName\": \"{{lastName}}\",\n    \"email\": \"{{userEmail}}\",\n    \"password\": \"{{userPassword}}\",\n    \"role\": {{userRole}},\n    \"dateOfBirth\": \"{{dateOfBirth}}\"\n}"
 						},
 						"url": {
-							"raw": "{{authServiceUrl}}/api/auth/register",
+							"raw": "{{authServiceUrl}}/api/register",
 							"host": [
 								"{{authServiceUrl}}"
 							],
 							"path": [
 								"api",
-								"auth",
 								"register"
 							]
 						},
-						"description": "Register a new user in the system"
+						"description": "Register a new user in the system with role specification (0=User, 1=Seller, 2=Admin)"
+					}
+				},
+				{
+					"name": "Confirm Email",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200 OK\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Email confirmation successful\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.status).to.eql(0);",
+									"    pm.expect(jsonData.data).to.have.property('succeeded');",
+									"    pm.expect(jsonData.data.succeeded).to.be.true;",
+									"    pm.expect(jsonData.data).to.have.property('email');",
+									"    pm.expect(jsonData.data.email).to.eql(pm.environment.get(\"userEmail\"));",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{authServiceUrl}}/api/confirm-email?email={{userEmail}}&token={{confirmationToken}}",
+							"host": [
+								"{{authServiceUrl}}"
+							],
+							"path": [
+								"api",
+								"confirm-email"
+							],
+							"query": [
+								{
+									"key": "email",
+									"value": "{{userEmail}}"
+								},
+								{
+									"key": "token",
+									"value": "{{confirmationToken}}"
+								}
+							]
+						},
+						"description": "Confirm user email with token received during registration"
 					}
 				},
 				{
@@ -72,12 +125,13 @@
 									"",
 									"pm.test(\"Response contains JWT token\", function () {",
 									"    var jsonData = pm.response.json();",
-									"    pm.expect(jsonData).to.have.property('accessToken');",
-									"    pm.expect(jsonData).to.have.property('refreshToken');",
+									"    pm.expect(jsonData.status).to.eql(0);",
+									"    pm.expect(jsonData.data).to.have.property('securityToken');",
+									"    pm.expect(jsonData.data).to.have.property('refreshToken');",
 									"    ",
 									"    // Save tokens to environment variables for future requests",
-									"    pm.environment.set(\"accessToken\", jsonData.accessToken);",
-									"    pm.environment.set(\"refreshToken\", jsonData.refreshToken);",
+									"    pm.environment.set(\"accessToken\", jsonData.data.securityToken);",
+									"    pm.environment.set(\"refreshToken\", jsonData.data.refreshToken);",
 									"});"
 								],
 								"type": "text/javascript"
@@ -97,13 +151,12 @@
 							"raw": "{\n    \"email\": \"{{userEmail}}\",\n    \"password\": \"{{userPassword}}\"\n}"
 						},
 						"url": {
-							"raw": "{{authServiceUrl}}/api/auth/login",
+							"raw": "{{authServiceUrl}}/api/login",
 							"host": [
 								"{{authServiceUrl}}"
 							],
 							"path": [
 								"api",
-								"auth",
 								"login"
 							]
 						},
@@ -123,12 +176,13 @@
 									"",
 									"pm.test(\"Response contains new JWT token\", function () {",
 									"    var jsonData = pm.response.json();",
-									"    pm.expect(jsonData).to.have.property('accessToken');",
-									"    pm.expect(jsonData).to.have.property('refreshToken');",
+									"    pm.expect(jsonData.status).to.eql(0);",
+									"    pm.expect(jsonData.data).to.have.property('securityToken');",
+									"    pm.expect(jsonData.data).to.have.property('refreshToken');",
 									"    ",
 									"    // Update tokens in environment variables",
-									"    pm.environment.set(\"accessToken\", jsonData.accessToken);",
-									"    pm.environment.set(\"refreshToken\", jsonData.refreshToken);",
+									"    pm.environment.set(\"accessToken\", jsonData.data.securityToken);",
+									"    pm.environment.set(\"refreshToken\", jsonData.data.refreshToken);",
 									"});"
 								],
 								"type": "text/javascript"
@@ -148,69 +202,16 @@
 							"raw": "{\n    \"refreshToken\": \"{{refreshToken}}\"\n}"
 						},
 						"url": {
-							"raw": "{{authServiceUrl}}/api/auth/refresh",
+							"raw": "{{authServiceUrl}}/api/refresh",
 							"host": [
 								"{{authServiceUrl}}"
 							],
 							"path": [
 								"api",
-								"auth",
 								"refresh"
 							]
 						},
-						"description": "Refresh the JWT access token using a refresh token"
-					}
-				},
-				{
-					"name": "Get User Profile",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test(\"Status code is 200 OK\", function () {",
-									"    pm.response.to.have.status(200);",
-									"});",
-									"",
-									"pm.test(\"Response contains user profile data\", function () {",
-									"    var jsonData = pm.response.json();",
-									"    pm.expect(jsonData).to.have.property('userId');",
-									"    pm.expect(jsonData).to.have.property('username');",
-									"    pm.expect(jsonData).to.have.property('email');",
-									"    pm.expect(jsonData.email).to.eql(pm.environment.get(\"userEmail\"));",
-									"});"
-								],
-								"type": "text/javascript"
 							}
-						}
-					],
-					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{accessToken}}",
-									"type": "string"
-								}
-							]
-						},
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{authServiceUrl}}/api/auth/profile",
-							"host": [
-								"{{authServiceUrl}}"
-							],
-							"path": [
-								"api",
-								"auth",
-								"profile"
-							]
-						},
-						"description": "Get current user profile information"
-					}
-				}
 			]
 		},
 		{
@@ -761,7 +762,7 @@
 					"    console.log(\"No access token found. Attempting to login...\");",
 					"    ",
 					"    pm.sendRequest({",
-					"        url: authServiceUrl + \"/api/auth/login\",",
+					"        url: authServiceUrl + \"/api/login\",
 					"        method: \"POST\",",
 					"        header: {",
 					"            \"Content-Type\": \"application/json\"",
@@ -778,9 +779,9 @@
 					"            console.error(\"Error during auto-login:\", err);",
 					"        } else if (res.code === 200) {",
 					"            const jsonData = res.json();",
-					"            if (jsonData && jsonData.accessToken) {",
-					"                pm.environment.set(\"accessToken\", jsonData.accessToken);",
-					"                pm.environment.set(\"refreshToken\", jsonData.refreshToken);",
+					"            if (jsonData && jsonData.data && jsonData.data.securityToken) {",
+					"                pm.environment.set(\"accessToken\", jsonData.data.securityToken);",
+					"                pm.environment.set(\"refreshToken\", jsonData.data.refreshToken);",
 					"                console.log(\"Auto-login successful, token saved.\");",
 					"            }",
 					"        } else {",
@@ -806,7 +807,7 @@
 					"        console.log(\"Attempting to refresh expired token...\");",
 					"        ",
 					"        pm.sendRequest({",
-					"            url: authServiceUrl + \"/api/auth/refresh\",",
+					"            url: authServiceUrl + \"/api/refresh\",
 					"            method: \"POST\",",
 					"            header: {",
 					"                \"Content-Type\": \"application/json\"",
@@ -822,9 +823,9 @@
 					"                console.error(\"Error during token refresh:\", err);",
 					"            } else if (res.code === 200) {",
 					"                const jsonData = res.json();",
-					"                if (jsonData && jsonData.accessToken) {",
-					"                    pm.environment.set(\"accessToken\", jsonData.accessToken);",
-					"                    pm.environment.set(\"refreshToken\", jsonData.refreshToken);",
+					"                if (jsonData && jsonData.data && jsonData.data.securityToken) {",
+					"                    pm.environment.set(\"accessToken\", jsonData.data.securityToken);",
+					"                    pm.environment.set(\"refreshToken\", jsonData.data.refreshToken);",
 					"                    console.log(\"Token refresh successful. Please retry your request.\");",
 					"                }",
 					"            } else {",

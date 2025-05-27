@@ -33,7 +33,7 @@ public class TokenService : ITokenService
             new(JwtRegisteredClaimNames.Sub, applicationUser.Email ?? string.Empty),
             new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
             new(JwtRegisteredClaimNames.Email, applicationUser.Email ?? string.Empty),
-            new("userId", applicationUser.Id),
+            new(ClaimTypes.NameIdentifier, applicationUser.Id),
         }.Union(userClaims).Union(roleClaims);
 
         var expiresInMinutes = int.TryParse(configuration[AuthConstants.JwtSettingsExpires], out var minutes) 

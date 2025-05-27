@@ -17,6 +17,14 @@ public class RegisterCommandHandler : IRequestHandler<RegisterCommand, RegisterR
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly IConfiguration _configuration;
     private readonly ILogger<RegisterCommandHandler> _logger;
+    // Maps Role enum values to the actual role names in the database
+    // The IDs in the database are: Admin=1, User=2, Seller=3
+    private readonly Dictionary<Role, string> _roleMapping = new()
+    {
+        { Role.User, "User" },     // Role.User (0) maps to "User" role
+        { Role.Seller, "Seller" }, // Role.Seller (1) maps to "Seller" role
+        { Role.Admin, "Admin" }    // Role.Admin (2) maps to "Admin" role
+    };
 
     public RegisterCommandHandler(
         UserManager<ApplicationUser> userManager,
@@ -74,7 +82,28 @@ public class RegisterCommandHandler : IRequestHandler<RegisterCommand, RegisterR
         }
 
         // Add role to user
-        await _userManager.AddToRoleAsync(user, request.Role.ToString());
+        if (!_roleMapping.TryGetValue(request.Role, out string roleName))
+        {
+            roleName = "User"; // Default to User role if the requested role is invalid
+            _logger.LogWarning("Invalid role requested: {Role}. Defaulting to User role.", request.Role);
+        }
+
+        _logger.LogInformation("Assigning role {RoleName} to user {Email}", roleName, user.Email);
+        var roleResult = await _userManager.AddToRoleAsync(user, roleName);
+        
+        if (!roleResult.Succeeded)
+        {
+            var errors = string.Join(", ", roleResult.Errors.Select(e => e.Description));
+            _logger.LogError("Failed to assign role {Role} to user {Email}. Errors: {Errors}", 
+                roleName, user.Email, errors);
+            
+            // We'll continue with registration but log the error for troubleshooting
+            // The user will need an admin to fix their role assignment
+        }
+        else
+        {
+            _logger.LogInformation("Successfully assigned role {RoleName} to user {Email}", roleName, user.Email);
+        }
 
         // Generate email confirmation token
         var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);

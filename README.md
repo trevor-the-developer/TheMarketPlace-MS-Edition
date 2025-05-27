@@ -1,200 +1,123 @@
-# The Marketplace Microservices API Development Setup Guide
+# TheMarketPlace Microservices API
 
-This comprehensive guide will help you get the Marketplace microservices solution up and running on your development machine.
+A modern microservices-based marketplace platform built with .NET 8, featuring user authentication, listing management, search capabilities, and document processing.
 
-## Prerequisites
+## Quick Start
 
-Before starting, ensure you have the following installed:
+### Prerequisites
 
 - **.NET 8.0 SDK** - [Download here](https://dotnet.microsoft.com/download/dotnet/8.0)
 - **Docker Desktop** - [Download here](https://www.docker.com/products/docker-desktop)
 - **Git** - [Download here](https://git-scm.com/downloads)
-- **Your preferred IDE** (Visual Studio, VS Code, or JetBrains Rider)
 
-### Verify Prerequisites
-
-Run these commands to verify your setup:
+### Get Started in 30 Seconds
 
 ```bash
-# Check .NET version (should show 8.0.x)
-dotnet --version
-
-# Check Docker
-docker --version
-docker-compose --version
-
-# Check Git
-git --version
-```
-
-## Quick Start
-
-### 1. Clone the Repository
-
-```bash
+# Clone the repository
 git clone <repository-url>
 cd the-marketplace-msapi
+
+# Start everything with Docker
+./run-dev.sh --setup-docker
 ```
 
-### 2. Start the Complete Solution
+**That's it!** All services are now running and ready to use.
 
-The fastest way to get everything running:
+## Service URLs
+
+Once started, access your services at:
+
+| Service | URL | Purpose |
+|---------|-----|---------|
+| **Authentication** | http://localhost:5000/swagger | User registration & login |
+| **Listing** | http://localhost:5001/swagger | Marketplace listings |
+| **Search** | http://localhost:5002/swagger | Search functionality |
+| **Document Processor** | http://localhost:5003/swagger | PDF generation |
+
+### Management Dashboards
+
+| Dashboard | URL | Credentials |
+|-----------|-----|-------------|
+| **Hangfire** | http://localhost:5003/hangfire | Background jobs |
+| **RabbitMQ** | http://localhost:15672 | guest/guest |
+| **OpenSearch** | http://localhost:5601 | Search analytics |
+| **MinIO Console** | http://localhost:9001 | minioadmin/minioadmin |
+
+## Development Modes
+
+### 1. Full Docker Environment (Recommended for Testing)
 
 ```bash
-# Start all services and infrastructure
-./run-dev.sh all
+# Start all services with Docker
+./run-dev.sh --setup-docker
+
+# Clean start with fresh data
+./run-dev.sh --setup-docker --clean-volumes
+
+# Stop everything
+./run-dev.sh --teardown-docker
 ```
 
-**That's it!** All services will be available at:
-- Authentication Service: http://localhost:5000/swagger
-- Listing Service: http://localhost:5001/swagger  
-- Search Service: http://localhost:5002/swagger
-- Document Processor: http://localhost:5003/swagger
-- Hangfire Dashboard: http://localhost:5003/hangfire
-- OpenSearch Dashboard: http://localhost:5601
-- RabbitMQ Management: http://localhost:15672 (guest/guest)
-- MinIO Console: http://localhost:9001 (minioadmin/minioadmin)
-
-For a quick reference of all API endpoints and testing flows, see:
-- `postman-testing.md` - Detailed testing guide with examples
-- `postman-testing-quick-ref.md` - Concise endpoint reference and environment variables
-
-These guides will help you get started with testing the API endpoints quickly.
-
-## Detailed Setup Options
-
-### Option 1: Docker Compose (Recommended for Full Testing)
-
-Start everything with a single command:
+### 2. Individual Service Development (Recommended for Coding)
 
 ```bash
-# Start all services with their dependencies
-docker-compose up
+# Run specific services for active development
+./run-dev.sh auth      # Authentication service only
+./run-dev.sh listing   # Listing service only
+./run-dev.sh search    # Search service only
+./run-dev.sh docs      # Document processor only
 ```
 
-This approach:
-- ✅ Closest to production environment
-- ✅ No local .NET runtime issues
-- ✅ Easy cleanup with `docker-compose down`
-- ❌ Slower for active development (requires rebuilding for code changes)
+*Note: Infrastructure (databases, message queues) starts automatically*
 
-### Option 2: Hybrid Development Setup (Recommended for Active Development)
-
-Start infrastructure with Docker, run services locally for faster development:
+### 3. Service Health Monitoring
 
 ```bash
-# Start only the infrastructure services
-docker-compose up -d postgres opensearch opensearch-dashboards rabbitmq mongodb minio
+# Check if all services are healthy
+./run-dev.sh --health-check
 
-# Run services individually (in separate terminals)
-./run-dev.sh auth     # Terminal 1: Authentication Service
-./run-dev.sh listing  # Terminal 2: Listing Service  
-./run-dev.sh search   # Terminal 3: Search Service
-./run-dev.sh docs     # Terminal 4: Document Processor Service
+# Check service status
+./run-dev.sh status
 ```
 
-This approach:
-- ✅ Fast development cycle (hot reload, debugging)
-- ✅ Real database and search engine
-- ✅ Easy to restart individual services
-- ❌ Requires multiple terminal windows
+## API Testing
 
-### Option 3: Manual Setup (Full Control)
-
-For complete control over each service:
+### Option 1: Automated Testing Script
 
 ```bash
-# 1. Start infrastructure
-docker-compose up -d postgres opensearch opensearch-dashboards rabbitmq mongodb minio
+# Run complete test suite
+./api_tests.sh all
 
-# 2. Run each service manually (separate terminals)
-
-# Terminal 1: Authentication Service
-cd src/Services/AuthenticationService/API/AuthenticationService.Api
-dotnet run --urls=http://localhost:5000
-
-# Terminal 2: Listing Service
-cd src/Services/ListingService/API/ListingService.Api
-dotnet run --urls=http://localhost:5001
-
-# Terminal 3: Search Service
-cd src/Services/SearchService/API/SearchService.Api
-dotnet run --urls=http://localhost:5002
-
-# Terminal 4: Document Processor Service
-cd src/Functions/DocumentProcessor
-dotnet run --urls=http://localhost:5003
+# Test specific services
+./api_tests.sh auth
+./api_tests.sh listing
+./api_tests.sh search
 ```
 
-## Service Endpoints and Documentation
+### Option 2: Manual API Testing
 
-| Service | URL | Swagger UI | Purpose |
-|---------|-----|------------|---------|
-| Authentication | http://localhost:5000 | http://localhost:5000/swagger | User registration, login, JWT tokens |
-| Listing | http://localhost:5001 | http://localhost:5001/swagger | Marketplace listings and categories |
-| Search | http://localhost:5002 | http://localhost:5002/swagger | Search across all marketplace content |
-| Document Processor | http://localhost:5003 | http://localhost:5003/swagger | Background job processing |
-| Hangfire Dashboard | http://localhost:5003/hangfire | N/A | Job monitoring and management |
-| OpenSearch Dashboard | http://localhost:5601 | N/A | Search engine management and monitoring |
-| RabbitMQ Management | http://localhost:15672 | N/A | Message broker management (guest/guest) |
-| MinIO Console | http://localhost:9001 | N/A | Object storage management (minioadmin/minioadmin) |
-
-## Key API Endpoints Reference
-
-### Authentication Service (http://localhost:5000)
-- POST `/api/register` - Register new user
-- GET `/api/confirm-email` - Confirm email with token
-- POST `/api/login` - Login and get tokens
-- POST `/api/refresh` - Refresh access token
-- POST `/api/logout` - Logout and revoke token
-
-### Listing Service (http://localhost:5001)
-- GET `/api/categories` - List all categories
-- POST `/api/listings` - Create new listing
-- GET `/api/listings/{id}` - Get listing by ID
-- PUT `/api/listings/{id}` - Update listing
-- DELETE `/api/listings/{id}` - Delete listing
-
-### Search Service (http://localhost:5002)
-- GET `/api/search?query={term}` - Basic search
-- POST `/api/search/advanced` - Advanced search with filters
-
-### Document Processor (http://localhost:5003)
-- POST `/api/documents/generate` - Generate document from listing
-- GET `/api/documents/jobs/{jobId}` - Check document generation status
-- GET `/api/documents/download/{id}` - Download generated document
-
-## Getting Started with the API
-
-### Step 1: Register a User
-
+#### 1. Register a User
 ```bash
 curl -X POST http://localhost:5000/api/register \
   -H "Content-Type: application/json" \
   -d '{
     "firstName": "Test",
     "lastName": "User",
-    "email": "test@example.com", 
+    "email": "test@example.com",
     "password": "Test@123",
     "dateOfBirth": "2000-01-01T00:00:00Z",
     "role": 1
   }'
 ```
 
-The response will include a confirmation token that you'll need for the next step.
-
-### Step 2: Confirm Email
-
+#### 2. Confirm Email (Required)
 ```bash
 curl -G "http://localhost:5000/api/confirm-email" \
   --data-urlencode "email=test@example.com" \
-  --data-urlencode "token=YOUR_CONFIRMATION_TOKEN_HERE"
+  --data-urlencode "token=YOUR_CONFIRMATION_TOKEN"
 ```
 
-Email confirmation is required before login. You'll receive a success message when completed.
-
-### Step 3: Login and Get JWT Token
-
+#### 3. Login and Get Token
 ```bash
 curl -X POST http://localhost:5000/api/login \
   -H "Content-Type: application/json" \
@@ -204,332 +127,135 @@ curl -X POST http://localhost:5000/api/login \
   }'
 ```
 
-The response will include:
-- An access token (JWT)
-- A refresh token
-- Token expiration time
-
-Save both tokens - you'll need the access token for authenticated requests and the refresh token when the access token expires.
-
-### Step 4: List Categories
-
-```bash
-curl -X GET http://localhost:5001/api/categories \
-  -H "Authorization: Bearer YOUR_ACCESS_TOKEN_HERE"
-```
-
-This will return available categories. Save a categoryId for use in the next step.
-
-### Step 5: Create Your First Listing
-
+#### 4. Create a Listing
 ```bash
 curl -X POST http://localhost:5001/api/listings \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_ACCESS_TOKEN_HERE" \
+  -H "Authorization: Bearer YOUR_TOKEN_HERE" \
   -d '{
-    "title": "Test Listing for API",
-    "description": "This is a test listing created through the API",
-    "price": 99.99,
-    "location": "Test City",
-    "categoryId": "YOUR_CATEGORY_ID_HERE",
-    "tags": ["test", "api"]
-  }'
-```
-
-The response will include the listingId for your new listing.
-
-### Step 6: Search for Your Listing
-
-```bash
-curl "http://localhost:5002/api/search?query=test" \
-  -H "Authorization: Bearer YOUR_ACCESS_TOKEN_HERE"
-```
-
-### Step 7: Generate a Document from Your Listing
-
-```bash
-curl -X POST http://localhost:5003/api/documents/generate \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_ACCESS_TOKEN_HERE" \
-  -d '{
-    "type": "listing_pdf",
-    "parameters": {
-      "listingId": "YOUR_LISTING_ID_HERE",
-      "includeImages": true,
-      "includeContactInfo": true
+    "command": {
+      "title": "My First Listing",
+      "description": "A test listing",
+      "price": 99.99,
+      "location": "Test City",
+      "categoryId": "CATEGORY_ID_FROM_/api/categories",
+      "tags": ["test"]
     }
   }'
 ```
 
-This will return a jobId that you can use to check the document generation status.
+### Option 3: Swagger UI
 
-### Step 8: Check Document Generation Status
+Visit any service's Swagger UI (e.g., http://localhost:5001/swagger):
+1. Click **"Authorize"**
+2. Enter: `Bearer YOUR_JWT_TOKEN`
+3. Test endpoints interactively
 
-```bash
-curl -X GET http://localhost:5003/api/documents/jobs/YOUR_JOB_ID_HERE \
-  -H "Authorization: Bearer YOUR_ACCESS_TOKEN_HERE"
-```
+## Project Structure
 
-When completed, this will return a documentId that you can use to download the document.
+### Services
+- **AuthenticationService** (`src/Services/AuthenticationService/`) - User management & JWT tokens
+- **ListingService** (`src/Services/ListingService/`) - Marketplace listings & categories  
+- **SearchService** (`src/Services/SearchService/`) - Full-text search with OpenSearch
+- **DocumentProcessor** (`src/Functions/DocumentProcessor/`) - Background job processing
 
-### Step 9: Refresh Your Token (When Needed)
-
-```bash
-curl -X POST http://localhost:5000/api/refresh \
-  -H "Content-Type: application/json" \
-  -d '{
-    "token": "YOUR_EXPIRED_ACCESS_TOKEN",
-    "refreshToken": "YOUR_REFRESH_TOKEN"
-  }'
-```
-
-This will return a new access token and refresh token pair.
-
-## Using Swagger UI
-
-For easier API testing, use the Swagger interfaces:
-
-1. **Open Swagger UI** for any service (e.g., http://localhost:5001/swagger)
-2. **Authenticate**: Click the "Authorize" button
-3. **Enter your token**: Format as `Bearer YOUR_JWT_TOKEN_HERE`
-4. **Test endpoints**: Expand any endpoint and click "Try it out"
-
-## Using Postman for API Testing
-
-For more comprehensive testing, we provide Postman collections:
-
-1. Import the collection: `TheMarketPlace-MS-Collection.postman_collection.json`
-2. Import the environment: `TheMarketPlace-MS-Environment.postman_environment.json`
-3. Set the environment variables:
-   - `authServiceUrl`: http://localhost:5000
-   - `listingServiceUrl`: http://localhost:5001
-   - `searchServiceUrl`: http://localhost:5002
-   - `documentProcessorUrl`: http://localhost:5003
-   - `username`: Your test username
-   - `userEmail`: Your test email
-   - `userPassword`: Your test password
-
-The collection includes the complete testing flow for all services. For a quick reference guide to all endpoints, see `postman-testing-quick-ref.md`.
+### Infrastructure
+- **PostgreSQL** - Primary database
+- **OpenSearch** - Search engine
+- **RabbitMQ** - Message broker
+- **MongoDB** - Document storage
+- **MinIO** - File storage
 
 ## Development Workflow
 
-### Making Code Changes
-
-**For Docker Compose setup:**
-```bash
-# After making changes, rebuild and restart
-docker-compose down
-docker-compose up --build
-```
-
-**For Hybrid/Manual setup:**
-- Services running with `dotnet run` will automatically reload on code changes
-- Only restart if you change configuration or add new dependencies
-
-### Database Changes
-
-If you modify Entity Framework models:
+### Day-to-Day Development
 
 ```bash
-# Navigate to the service with changes (e.g., ListingService)
-cd src/Services/ListingService/Infrastructure
+# Start infrastructure + your service
+./run-dev.sh auth  # Develops auth service with hot reload
 
-# Add a new migration
-dotnet ef migrations add YourMigrationName --startup-project ../API/ListingService.Api
-
-# Apply migrations (done automatically on startup, but you can run manually)
-dotnet ef database update --startup-project ../API/ListingService.Api
+# In another terminal, test your changes
+./api_tests.sh auth
 ```
 
-### Viewing Logs
+### Integration Testing
 
-**Docker Compose:**
 ```bash
-# View logs for all services
-docker-compose logs -f
-
-# View logs for specific service
-docker-compose logs -f listingservice
+# Full environment testing
+./run-dev.sh --setup-docker
+./api_tests.sh all
 ```
 
-**Individual Services:**
-Logs appear directly in the terminal where you ran `dotnet run`
+### Debugging
+
+```bash
+# Start only infrastructure
+./run-dev.sh --setup-docker
+docker compose stop auth-svc  # Stop the service you want to debug
+
+# Run your service with debugging support
+cd src/Services/AuthenticationService/API/AuthenticationService.Api
+dotnet run --configuration Debug --urls=http://localhost:5000
+```
+
+## Architecture Highlights
+
+- **Clean Architecture** - Domain → Application → Infrastructure → API layers
+- **CQRS with MediatR** - Command Query Responsibility Segregation
+- **Event-Driven** - Services communicate via RabbitMQ events
+- **JWT Authentication** - Secure token-based authentication
+- **Background Jobs** - Hangfire for document processing
+- **Container Ready** - Docker Compose for easy deployment
 
 ## Troubleshooting
 
-### Common Issues and Solutions
+### Common Issues
 
-**🔥 OpenSearch fails to start**
+**Services won't start:**
 ```bash
-# Remove the data volume and restart
-docker-compose down
-docker volume rm the-marketplace-msapi_opensearch-data
-docker-compose up -d opensearch
+# Check Docker is running
+docker --version
+
+# Fresh restart
+./run-dev.sh --setup-docker --clean-volumes
 ```
 
-**🔥 Port already in use**
+**Port conflicts:**
 ```bash
-# Find what's using the port (replace 5000 with your port)
-lsof -i :5000  # On macOS/Linux
-netstat -ano | findstr :5000  # On Windows
-
-# Kill the process or change the port in your configuration
+# Check what's using the port
+lsof -i :5000  # macOS/Linux
+netstat -ano | findstr :5000  # Windows
 ```
 
-**🔥 Database connection errors**
+**Database issues:**
 ```bash
-# Check if PostgreSQL is running
-docker ps | grep postgres
-
-# View PostgreSQL logs
-docker-compose logs postgres
-
-# Reset the database
-docker-compose down
-docker volume rm the-marketplace-msapi_postgres-data
-docker-compose up -d postgres
+# Reset databases
+./api_tests.sh --clean-databases
 ```
 
-**🔥 JWT token expired**
-- Tokens expire after a set time (check AuthenticationService configuration)
-- Simply login again to get a fresh token
+**Token expired:**
+- Tokens expire after 60 minutes
+- Simply login again for a fresh token
 
-**🔥 Build errors**
-```bash
-# Clean and restore packages
-dotnet clean
-dotnet restore
+### Get Help
 
-# Check .NET version
-dotnet --version  # Should show 8.0.x
+1. **Check service health**: `./run-dev.sh --health-check`
+2. **View logs**: `docker compose logs [service-name]`
+3. **Fresh start**: `./run-dev.sh --setup-docker --clean-volumes`
 
-# Update packages if needed
-dotnet list package --outdated
-```
+## Additional Documentation
 
-**🔥 Services can't communicate**
-- Ensure all services are running on correct ports
-- Check firewall settings
-- Verify Docker network configuration with `docker network ls`
+- **[API Testing Guide](docs/api-testing-script.md)** - Comprehensive testing documentation
+- **[Services Runner Guide](docs/services-runner.md)** - Detailed development setup options
+- **[Postman Collection](postman/)** - Ready-to-use API testing collection
 
-### Health Checks
+## Contributing
 
-Check if services are healthy:
+1. Fork the repository
+2. Create a feature branch
+3. Run tests: `./api_tests.sh all`
+4. Submit a pull request
 
-```bash
-# Quick health check for all services
-curl http://localhost:5000/health  # Authentication Service
-curl http://localhost:5001/health  # Listing Service
-curl http://localhost:5002/health  # Search Service
-```
+---
 
-### Reset Everything
-
-If you need a completely fresh start:
-
-```bash
-# Stop all containers and remove volumes
-docker-compose down -v
-
-# Remove any orphaned containers
-docker container prune
-
-# Remove unused images (optional)
-docker image prune
-
-# Restart everything
-docker-compose up
-```
-
-## Architecture Overview
-
-The solution follows a microservices architecture with clean separation of concerns:
-
-### Services
-
-- **AuthenticationService**: User registration, login, JWT token management
-- **ListingService**: Marketplace listings, categories, and business rules
-- **SearchService**: Full-text search capabilities using OpenSearch
-- **DocumentProcessor**: Background job processing for PDF generation and document workflows
-
-### Infrastructure
-
-- **PostgreSQL**: Primary database for AuthenticationService, ListingService, and SearchService
-- **MongoDB**: Document database for DocumentProcessor
-- **OpenSearch**: Search engine and analytics
-- **RabbitMQ**: Message broker for event-driven communication
-- **MinIO**: Object storage for file management
-- **Hangfire**: Background job processing system
-
-### Architecture Patterns
-
-Each service implements:
-- **Clean Architecture**: Domain → Application → Infrastructure → API layers
-- **CQRS**: Command Query Responsibility Segregation with MediatR
-- **Event-Driven Design**: Services publish/consume events for loose coupling
-- **Repository Pattern**: Data access abstraction
-- **Dependency Injection**: Loose coupling and testability
-
-## Environment Variables
-
-For proper setup, each service requires specific environment variables. These are automatically set when using Docker Compose, but you may need to configure them manually for local development.
-
-### Authentication Service
-```
-AuthenticationService__ConnectionString=Server=postgres;Database=MarketplaceAuth;User Id=postgres;Password=postgrespw;
-JwtSettings__Key=your_jwt_secret_key_should_be_at_least_32_characters_long
-JwtSettings__Issuer=MarketplaceIdentity
-JwtSettings__Audience=MarketplaceApi
-JwtSettings__DurationInMinutes=60
-```
-
-### Listing Service
-```
-ListingService__ConnectionString=Server=postgres;Database=MarketplaceListings;User Id=postgres;Password=postgrespw;
-RabbitMQ__Host=rabbitmq
-RabbitMQ__Username=guest
-RabbitMQ__Password=guest
-```
-
-### Search Service
-```
-SearchService__ConnectionString=Server=postgres;Database=MarketplaceSearch;User Id=postgres;Password=postgrespw;
-OpenSearch__Uri=http://opensearch:9200
-RabbitMQ__Host=rabbitmq
-RabbitMQ__Username=guest
-RabbitMQ__Password=guest
-```
-
-### Document Processor
-```
-DocumentProcessor__ConnectionString=Server=postgres;Database=MarketplaceDocuments;User Id=postgres;Password=postgrespw;
-MinIO__Endpoint=minio:9000
-MinIO__AccessKey=minioadmin
-MinIO__SecretKey=minioadmin
-MinIO__BucketName=documents
-RabbitMQ__Host=rabbitmq
-RabbitMQ__Username=guest
-RabbitMQ__Password=guest
-```
-
-## Next Steps
-
-Once you have the solution running:
-
-1. **Explore the API**: Use Swagger UI or Postman to test different endpoints
-2. **Run the complete test flow**: Follow the steps in the Getting Started section
-3. **Check the code**: Review the clean architecture implementation
-4. **Add features**: Create new endpoints or modify existing ones
-5. **Run tests**: Execute `dotnet test` to run the test suite
-6. **Monitor with OpenSearch**: Use the dashboard to see indexed data
-
-## Getting Help
-
-If you encounter issues not covered in this guide:
-
-1. Check the service logs for detailed error messages
-2. Review the project documentation in `/docs`
-3. Ensure all prerequisites are correctly installed
-4. Try the "Reset Everything" steps for a clean slate
-
-Happy coding! 🚀
+**Ready to build the next great marketplace? Let's go! 🚀**

@@ -10,6 +10,7 @@ using ListingService.Application.Features.Listing.Queries.GetListing;
 using ListingService.Application.Features.Listing.Queries.GetListings;
 using ListingService.Application.Features.Listing.Shared;
 using Microsoft.AspNetCore.Authorization;
+using ListingService.Application.Services.CurrentUserService;
 
 namespace ListingService.Api.Controllers;
 
@@ -18,10 +19,12 @@ namespace ListingService.Api.Controllers;
 public class ListingsController : ControllerBase
 {
     private readonly IMediator _mediator;
+    private readonly ICurrentUserService _currentUserService;
 
-    public ListingsController(IMediator mediator)
+    public ListingsController(IMediator mediator, ICurrentUserService currentUserService)
     {
         _mediator = mediator;
+        _currentUserService = currentUserService;
     }
 
     [HttpGet]
@@ -116,5 +119,23 @@ public class ListingsController : ControllerBase
         }
         
         return Ok(ServiceResponse<ListingDto>.Success(result));
+    }
+
+    [HttpGet("debug/claims")]
+    [Authorize]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public IActionResult GetClaims()
+    {
+        var claims = _currentUserService.GetClaims().Select(c => new { Type = c.Type, Value = c.Value }).ToList();
+        var result = new
+        {
+            IsAuthenticated = _currentUserService.IsAuthenticated,
+            NameIdentifier = _currentUserService.NameIdentifier,
+            Username = _currentUserService.Username,
+            Email = _currentUserService.Email,
+            Roles = _currentUserService.GetRoles(),
+            Claims = claims
+        };
+        return Ok(result);
     }
 }

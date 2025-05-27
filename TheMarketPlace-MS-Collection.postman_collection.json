@@ -306,7 +306,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"title\": \"Test Listing for Postman\",\n    \"description\": \"This is a test listing created through Postman\",\n    \"price\": 99.99,\n    \"location\": \"Test City\",\n    \"categoryId\": \"{{categoryId}}\",\n    \"tags\": [\"test\", \"postman\", \"api\"]\n}"
+							"raw": "{\n    \"title\": \"Test Listing for Postman\",\n    \"description\": \"This is a test listing created through Postman\",\n    \"price\": 99.99,\n    \"location\": \"Test City\",\n    \"categoryId\": \"{{categoryId}}\",\n    \"tagNames\": [\"test\", \"postman\", \"api\"]\n}"
 						},
 						"url": {
 							"raw": "{{listingServiceUrl}}/api/listings",
@@ -407,7 +407,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"title\": \"Updated Test Listing for Postman\",\n    \"description\": \"This listing has been updated through Postman\",\n    \"price\": 129.99,\n    \"location\": \"Test City Updated\",\n    \"categoryId\": \"{{categoryId}}\",\n    \"tags\": [\"test\", \"postman\", \"api\", \"updated\"]\n}"
+							"raw": "{\n    \"title\": \"Updated Test Listing for Postman\",\n    \"description\": \"This listing has been updated through Postman\",\n    \"price\": 129.99,\n    \"location\": \"Test City Updated\",\n    \"categoryId\": \"{{categoryId}}\",\n    \"tagNames\": [\"test\", \"postman\", \"api\", \"updated\"]\n}"
 						},
 						"url": {
 							"raw": "{{listingServiceUrl}}/api/listings/{{listingId}}",
@@ -550,7 +550,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"query\": \"test\",\n    \"filters\": {\n        \"minPrice\": 50,\n        \"maxPrice\": 150,\n        \"categoryIds\": [\"{{categoryId}}\"],\n        \"location\": \"Test City\",\n        \"tags\": [\"postman\", \"api\"]\n    },\n    \"sort\": {\n        \"field\": \"price\",\n        \"direction\": \"asc\"\n    },\n    \"pagination\": {\n        \"pageNumber\": 1,\n        \"pageSize\": 10\n    }\n}"
+							"raw": "{\n    \"query\": \"test\",\n    \"filters\": {\n        \"minPrice\": 50,\n        \"maxPrice\": 150,\n        \"categoryIds\": [\"{{categoryId}}\"],\n        \"location\": \"Test City\",\n        \"tagNames\": [\"postman\", \"api\"]\n    },\n    \"sort\": {\n        \"field\": \"price\",\n        \"direction\": \"asc\"\n    },\n    \"pagination\": {\n        \"pageNumber\": 1,\n        \"pageSize\": 10\n    }\n}"
 						},
 						"url": {
 							"raw": "{{searchServiceUrl}}/api/search/advanced",

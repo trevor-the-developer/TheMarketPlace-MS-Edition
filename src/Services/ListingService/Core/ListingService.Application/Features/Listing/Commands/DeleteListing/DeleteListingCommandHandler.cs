@@ -41,7 +41,7 @@ public class DeleteListingCommandHandler : IRequestHandler<DeleteListingCommand,
         }
 
         // Verify the user owns this listing
-        var currentUserId = _currentUserService.UserId;
+        var currentUserId = _currentUserService.NameIdentifier;
         if (currentUserId != null && Guid.TryParse(currentUserId, out Guid userId))
         {
             if (listing.SellerId != userId)
@@ -51,7 +51,7 @@ public class DeleteListingCommandHandler : IRequestHandler<DeleteListingCommand,
         }
         else
         {
-            throw new InvalidOperationException("User ID could not be determined from authenticated user");
+            throw new InvalidOperationException("User NameIdentifier could not be determined from authenticated user");
         }
 
         await _listingRepository.DeleteAsync(listing.Id, cancellationToken);

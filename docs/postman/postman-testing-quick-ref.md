@@ -25,10 +25,10 @@ POST   /api/search/advanced           - Advanced search with filters
 
 ## Document Processor (localhost:5003)
 ```
-POST   /api/documents/generate        - Generate document from listing
-GET    /api/documents/jobs/{jobId}    - Check document generation status
-GET    /api/documents/download/{id}   - Download generated document
+GET    /health                       - Health check endpoint
+GET    /hangfire                     - Background jobs dashboard
 ```
+> **NOTE**: Document generation is message-driven (no REST API). Use Hangfire dashboard to monitor jobs.
 
 ## Supporting Services
 ```
@@ -89,7 +89,7 @@ Content-Type: application/json         - Required for POST/PUT requests
   "price": 99.99,
   "location": "Test City",
   "categoryId": "{{categoryId}}",
-  "tags": ["test", "postman", "api"]
+  "tagNames": ["test", "postman", "api"]
 }
 ```
 
@@ -100,7 +100,7 @@ Content-Type: application/json         - Required for POST/PUT requests
   "filters": {
     "minPrice": 50, "maxPrice": 150,
     "categoryIds": ["{{categoryId}}"],
-    "location": "Test City", "tags": ["postman", "api"]
+    "location": "Test City", "tagNames": ["postman", "api"]
   },
   "sort": { "field": "price", "direction": "asc" },
   "pagination": { "pageNumber": 1, "pageSize": 10 }

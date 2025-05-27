@@ -49,15 +49,15 @@ public class CreateListingCommandHandler : IRequestHandler<CreateListingCommand,
 
         // Use the current user's ID if no seller ID was provided
         var sellerId = request.SellerId;
-        if (sellerId == Guid.Empty && _currentUserService.UserId != null)
+        if (sellerId == Guid.Empty && _currentUserService.NameIdentifier != null)
         {
-            if (Guid.TryParse(_currentUserService.UserId, out Guid userId))
+            if (Guid.TryParse(_currentUserService.NameIdentifier, out Guid userId))
             {
                 sellerId = userId;
             }
             else
             {
-                throw new InvalidOperationException("User ID could not be determined from authenticated user");
+                throw new InvalidOperationException("User NameIdentifier could not be determined from authenticated user");
             }
         }
 

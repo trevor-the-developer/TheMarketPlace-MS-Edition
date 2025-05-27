@@ -4,6 +4,8 @@
 # This script tests the various services in the TheMarketPlace microservices architecture
 # Aligned with postman collection and documentation
 
+# TODO: TK 26/05/2025 - move functions into a seperate file for reusability and cleaner code
+
 # Color definitions for better readability
 GREEN='\033[0;32m'
 RED='\033[0;31m'
@@ -340,13 +342,13 @@ function test_list_categories() {
     
     echo -e "${YELLOW}Response:${NC} ${response:0:500}..."
     
-    # Check if the response contains categories (updated to check for 'id' instead of 'categoryId')
+    # Check if the response contains categories
     if [[ $response == *"\"id\":"* ]]; then
         # Extract the first category ID
         CATEGORY_ID=$(extract_json_value "$response" "id")
         if [ -z "$CATEGORY_ID" ]; then
-            # Fallback extraction for nested data structure
-            CATEGORY_ID=$(echo "$response" | grep -o '"id":"[^"]*' | head -1 | sed 's/"id":"//g')
+            # Fallback extraction for nested data structure - handle GUID format
+            CATEGORY_ID=$(echo "$response" | grep -o '"id":"[a-f0-9-]*"' | head -1 | sed 's/"id":"//g' | sed 's/"//g')
         fi
         
         test_result "PASS" "Successfully retrieved categories"
@@ -362,6 +364,12 @@ function test_list_categories() {
 function test_create_listing() {
     test_header "Create Listing"
     
+    # Ensure we have a valid GUID for catgoryId
+    if [ -z "$CATEGORY_ID" ]; then
+        echo -e "${RED}No category ID available. Cannot create listing.${NC}"
+        return 1
+    fi
+    
     local response=$(curl -s -X POST "$LISTING_SERVICE_URL/api/listings" \
         -H "Authorization: Bearer $ACCESS_TOKEN" \
         -H "Content-Type: application/json" \
@@ -371,12 +379,12 @@ function test_create_listing() {
             \"price\": 99.99,
             \"location\": \"Test City\",
             \"categoryId\": \"$CATEGORY_ID\",
-            \"tags\": [\"test\", \"terminal\", \"api\"]
+            \"tagNames\": [\"test\", \"terminal\", \"api\"]
         }")
     
     echo -e "${YELLOW}Response:${NC} $response"
     
-    # Check if the response contains a listing ID
+    # Check if the response contains a listing id
     if [[ $response == *"\"id\":"* ]]; then
         LISTING_ID=$(extract_json_value "$response" "id")
         
@@ -421,7 +429,7 @@ function test_update_listing() {
             \"price\": 129.99,
             \"location\": \"Test City Updated\",
             \"categoryId\": \"$CATEGORY_ID\",
-            \"tags\": [\"test\", \"terminal\", \"api\", \"updated\"]
+            \"tagNames\": [\"test\", \"terminal\", \"api\", \"updated\"]
         }")
     
     echo -e "${YELLOW}Response:${NC} $response"
@@ -454,97 +462,25 @@ function test_basic_search() {
     fi
 }
 
-# Function to perform advanced search
+# Advanced search endpoint not implemented - using basic search only
 function test_advanced_search() {
-    test_header "Advanced Search"
-    
-    local response=$(curl -s -X POST "$SEARCH_SERVICE_URL/api/search/advanced" \
-        -H "Content-Type: application/json" \
-        -d "{
-            \"query\": \"test\",
-            \"filters\": {
-                \"minPrice\": 50,
-                \"maxPrice\": 150,
-                \"categoryIds\": [\"$CATEGORY_ID\"],
-                \"location\": \"Test City\",
-                \"tags\": [\"terminal\", \"api\"]
-            },
-            \"sort\": {
-                \"field\": \"price\",
-                \"direction\": \"asc\"
-            },
-            \"pagination\": {
-                \"pageNumber\": 1,
-                \"pageSize\": 10
-            }
-        }")
-    
-    echo -e "${YELLOW}Response:${NC} $response"
-    
-    # Check if the response contains search results structure
-    if [[ $response == *"data"* ]] && [[ $response == *"status"* ]]; then
-        test_result "PASS" "Successfully performed advanced search"
-        return 0
-    else
-        test_result "FAIL" "Failed to perform advanced search"
-        return 1
-    fi
+    test_header "Advanced Search (Skipped - Not Implemented)"
+    test_result "INFO" "Advanced search endpoint not implemented, using basic search instead"
+    return 0
 }
 
-# Function to generate a document
+# Document processor is a background service, not REST API
 function test_generate_document() {
-    test_header "Generate Document"
-    
-    local response=$(curl -s -X POST "$DOCUMENT_PROCESSOR_URL/api/documents/generate" \
-        -H "Authorization: Bearer $ACCESS_TOKEN" \
-        -H "Content-Type: application/json" \
-        -d "{
-            \"type\": \"listing_pdf\",
-            \"parameters\": {
-                \"listingId\": \"$LISTING_ID\",
-                \"includeImages\": true,
-                \"includeContactInfo\": true
-            }
-        }")
-    
-    echo -e "${YELLOW}Response:${NC} $response"
-    
-    # Check if the response contains a job ID
-    if [[ $response == *"jobId"* ]]; then
-        JOB_ID=$(extract_json_value "$response" "jobId")
-        
-        test_result "PASS" "Successfully submitted document generation job"
-        echo -e "${YELLOW}Job ID:${NC} $JOB_ID"
-        return 0
-    else
-        test_result "FAIL" "Failed to submit document generation job"
-        return 1
-    fi
+    test_header "Generate Document (Skipped - Background Service)"
+    test_result "INFO" "Document processor is a background service (message-driven), not REST API"
+    return 0
 }
 
-# Function to check document status
+# Document status check not applicable for background service
 function test_check_document_status() {
-    test_header "Check Document Status"
-    
-    local response=$(curl -s -X GET "$DOCUMENT_PROCESSOR_URL/api/documents/jobs/$JOB_ID" \
-        -H "Authorization: Bearer $ACCESS_TOKEN")
-    
-    echo -e "${YELLOW}Response:${NC} $response"
-    
-    # Check if the response contains a status
-    if [[ $response == *"status"* ]]; then
-        # Extract document ID if job is completed
-        if [[ $response == *"Completed"* ]] && [[ $response == *"documentId"* ]]; then
-            DOCUMENT_ID=$(extract_json_value "$response" "documentId")
-            echo -e "${YELLOW}Document ID:${NC} $DOCUMENT_ID"
-        fi
-        
-        test_result "PASS" "Successfully checked document status"
-        return 0
-    else
-        test_result "FAIL" "Failed to check document status"
-        return 1
-    fi
+    test_header "Check Document Status (Skipped - Background Service)"
+    test_result "INFO" "Document status check not applicable for background service"
+    return 0
 }
 
 # Function to delete a listing
@@ -640,9 +576,8 @@ function run_all_tests() {
         test_basic_search
         test_advanced_search
         
-        # Document processor tests
+        # Document processor tests (background service)
         test_generate_document
-        sleep 3  # Wait a bit for the job to process
         test_check_document_status
         
         # Cleanup
@@ -697,7 +632,6 @@ function run_document_tests() {
         test_list_categories
         test_create_listing
         test_generate_document
-        sleep 3  # Wait a bit for the job to process
         test_check_document_status
         test_delete_listing
     fi

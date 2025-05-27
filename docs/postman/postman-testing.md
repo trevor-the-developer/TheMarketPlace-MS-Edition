@@ -213,7 +213,7 @@ Content-Type: application/json
   "price": 99.99,
   "location": "Test City",
   "categoryId": "{{categoryId}}",
-  "tags": ["test", "postman", "api"]
+  "tagNames": ["test", "postman", "api"]
 }
 ```
 **Expected Response:**
@@ -241,7 +241,7 @@ Content-Type: application/json
   "price": 129.99,
   "location": "Test City Updated",
   "categoryId": "{{categoryId}}",
-  "tags": ["test", "postman", "api", "updated"]
+  "tagNames": ["test", "postman", "api", "updated"]
 }
 ```
 **Expected Response:**
@@ -277,7 +277,7 @@ Content-Type: application/json
     "maxPrice": 150,
     "categoryIds": ["{{categoryId}}"],
     "location": "Test City",
-    "tags": ["postman", "api"]
+    "tagNames": ["postman", "api"]
   },
   "sort": {
     "field": "price",
@@ -295,46 +295,18 @@ Content-Type: application/json
 
 ## Document Processor Tests
 
-### 12. Generate Document
-```http
-POST {{documentProcessorUrl}}/api/documents/generate
-Authorization: Bearer {{accessToken}}
-Content-Type: application/json
+> **NOTE**: The Document Processor is a background service that operates via message-driven architecture (RabbitMQ), not REST API endpoints. Document generation is triggered automatically when certain events occur (e.g., listing creation). Direct REST API endpoints for document generation are not currently implemented.
 
-{
-  "type": "listing_pdf",
-  "parameters": {
-    "listingId": "{{listingId}}",
-    "includeImages": true,
-    "includeContactInfo": true
-  }
-}
-```
-**Expected Response:**
-- Status: 202 Accepted
-- Job ID for document generation
-- Job ID is automatically saved to the jobId environment variable
+### Document Processing Flow
+1. When a listing is created or updated, a message is sent to the Document Processor
+2. The processor generates documents in the background using Hangfire
+3. Generated documents are stored in MinIO object storage
+4. Document status can be monitored via the Hangfire dashboard at `{{hangfireDashboardUrl}}`
 
-### 13. Check Document Status
-```http
-GET {{documentProcessorUrl}}/api/documents/jobs/{{jobId}}
-Authorization: Bearer {{accessToken}}
-```
-**Expected Response:**
-- Status: 200 OK
-- Job status (Processing, Completed, Failed)
-- If completed, a documentId will be provided
-- Document ID is automatically saved to the documentId environment variable
-
-### 14. Download Document (when ready)
-```http
-GET {{documentProcessorUrl}}/api/documents/download/{{documentId}}
-Authorization: Bearer {{accessToken}}
-```
-**Expected Response:**
-- Status: 200 OK
-- PDF document in response body
-- Content-Type: application/pdf
+### Monitoring Document Jobs
+- Access the Hangfire Dashboard: `{{hangfireDashboardUrl}}` (http://localhost:5003/hangfire)
+- View job queue status, success/failure rates, and job history
+- Retry failed jobs manually if needed
 ## Automated Scripts
 
 The Postman collection includes pre-request and test scripts that automate several tasks:

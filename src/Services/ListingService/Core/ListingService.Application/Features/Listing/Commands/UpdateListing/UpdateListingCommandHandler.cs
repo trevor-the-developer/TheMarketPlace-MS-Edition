@@ -53,7 +53,7 @@ public class UpdateListingCommandHandler : IRequestHandler<UpdateListingCommand,
         }
 
         // Verify the user owns this listing
-        var currentUserId = _currentUserService.UserId;
+        var currentUserId = _currentUserService.NameIdentifier;
         if (currentUserId != null && Guid.TryParse(currentUserId, out Guid userId))
         {
             if (listing.SellerId != userId)
@@ -63,7 +63,7 @@ public class UpdateListingCommandHandler : IRequestHandler<UpdateListingCommand,
         }
         else
         {
-            throw new InvalidOperationException("User ID could not be determined from authenticated user");
+            throw new InvalidOperationException("User NameIdentifier could not be determined from authenticated user");
         }
 
         // Update basic properties

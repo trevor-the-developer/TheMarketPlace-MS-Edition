@@ -14,9 +14,14 @@ using Hangfire;
 using Hangfire.PostgreSql;
 using Services.Core.DatabaseContext;
 
+#region Setup and init the web application builderr
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container
+#endregion
+
+#region Add services to the container
+
 builder.Services.AddControllers();
 
 // Configure settings
@@ -45,6 +50,10 @@ builder.Services.AddHangfire(config =>
         c.UseNpgsqlConnection("Server=postgres:5432;Database=hangfire;User Id=postgres;Password=postgrespw;"));
 });
 
+#endregion
+
+#region JWT Authentication & Authorisation
+
 // JWT authentication
 JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
 builder.Services.AddAuthentication(options =>
@@ -68,6 +77,10 @@ builder.Services.AddAuthentication(options =>
         RoleClaimType = "role"
     };
 });
+
+#endregion
+
+#region swagger
 
 // Swagger
 builder.Services.AddEndpointsApiExplorer();
@@ -93,18 +106,46 @@ builder.Services.AddSwaggerGen(c =>
                     Id = "Bearer"
                 }
             },
-            Array.Empty<string>()
+            []
         }
     });
 });
 
+#endregion
+
 var app = builder.Build();
 
+#region Setup the web application
+
 // Apply migrations for both Auth and Hangfire databases
-try
+await MigrationsSeedData(app);
+
+// HTTP request pipeline config
+if (app.Environment.IsDevelopment())
 {
-    using (var scope = app.Services.CreateScope())
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
+
+app.UseHttpsRedirection();
+
+app.UseAuthentication();
+app.UseAuthorization();
+
+app.MapControllers();
+
+#endregion
+
+app.Run();
+return;
+
+#region Local functions
+
+async Task MigrationsSeedData(WebApplication webApplication)
+{
+    try
     {
+        using var scope = webApplication.Services.CreateScope();
         var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
         
         // Auth database migration
@@ -126,29 +167,15 @@ try
         await SeedRoleData.SeedRolesAsync(roleManager, logger);
         logger.LogInformation("Role seeding completed.");
     }
-}
-catch (Exception ex)
-{
-    var logger = app.Services.GetRequiredService<ILogger<Program>>();
-    logger.LogError(ex, "An error occurred while applying migrations.");
-    throw;
-}
-
-// HTTP request pipeline config
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
+    catch (Exception ex)
+    {
+        var logger = webApplication.Services.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "An error occurred while applying migrations.");
+        throw;
+    }
 }
 
-app.UseHttpsRedirection();
-
-app.UseAuthentication();
-app.UseAuthorization();
-
-app.MapControllers();
-
-app.Run();
+#endregion
 
 // exposing this class to tests
 namespace AuthenticationService.Api

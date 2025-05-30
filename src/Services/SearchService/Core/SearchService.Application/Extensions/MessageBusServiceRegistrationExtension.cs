@@ -16,7 +16,6 @@ public static class MessageBusServiceRegistrationExtension
         services.AddMassTransit(config =>
         {
             // Register consumers
-            config.AddConsumer<DriverCreatedConsumer>();
             config.AddConsumer<ListingCreatedConsumer>();
 
             config.UsingRabbitMq((context, cfg) =>

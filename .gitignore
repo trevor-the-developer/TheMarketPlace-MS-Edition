@@ -52,3 +52,8 @@ CodeCoverage/
 *.VisualState.xml
 TestResult.xml
 nunit-*.xml
+.idea/.idea.TheMarketplaceDemo/.idea/.name
+.idea/.idea.TheMarketplaceDemo/.idea/encodings.xml
+.idea/.idea.TheMarketplaceDemo/.idea/indexLayout.xml
+.idea/.idea.TheMarketplaceDemo/.idea/vcs.xml
+.vscode/settings.json

@@ -33,7 +33,15 @@ public class ListingsController : ControllerBase
     public async Task<IActionResult> GetListings([FromQuery] GetListingsQuery query)
     {
         var result = await _mediator.Send(query);
-        return Ok(ServiceResponseCollection<ListingDto>.Success(result.Data, result.TotalRecords, result.PageNumber, result.PageSize));
+        if (result.Data != null)
+        {
+            return Ok(ServiceResponseCollection<ListingDto>.Success(result.Data, result.TotalRecords, result.PageNumber,
+                result.PageSize));
+        }
+        else
+        {
+            return NotFound();
+        }
     }
 
     [HttpGet("{id:guid}")]

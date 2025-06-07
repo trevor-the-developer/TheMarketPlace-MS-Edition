@@ -31,7 +31,14 @@ public class CategoriesController : ControllerBase
     public async Task<IActionResult> GetCategories([FromQuery] GetCategoriesQuery query)
     {
         var result = await _mediator.Send(query);
-        return Ok(ServiceResponseCollection<CategoryDto>.Success(result.Data, result.TotalRecords, result.PageNumber, result.PageSize));
+        if (result.Data != null)
+        {
+            return Ok(ServiceResponseCollection<CategoryDto>.Success(result.Data, result.TotalRecords, result.PageNumber, result.PageSize));            
+        }
+        else
+        {
+            return NotFound(result.Data);
+        }
     }
 
     [HttpGet("root")]

@@ -11,7 +11,7 @@ using System.Security.Claims;
 using System.Text;
 
 #region Setup and init the web application builder
- 
+
 var builder = WebApplication.CreateBuilder(args);
 var appConfig = builder.Services.AddApplicationConfiguration<ListingServiceConfiguration>(builder.Configuration);
 var configuration = builder.Configuration;

@@ -1,6 +1,6 @@
 # TheMarketPlace Microservices API
 
-![Marketplace Microservices Architecture](../../assets/themarketplace-ms-arch.png)
+![Marketplace Microservices Architecture](assets/themarketplace-ms-arch.png)
 
 A modern microservices-based marketplace platform built with .NET 8, featuring user authentication, listing management, search capabilities, and document processing.
 

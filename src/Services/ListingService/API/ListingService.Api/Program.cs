@@ -6,15 +6,42 @@ using ListingService.Persistence.SeedData;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using Services.Core.Extensions;
 using System.Security.Claims;
 using System.Text;
 
 #region Setup and init the web application builder
 
 var builder = WebApplication.CreateBuilder(args);
-var appConfig = builder.Services.AddApplicationConfiguration<ListingServiceConfiguration>(builder.Configuration);
 var configuration = builder.Configuration;
+
+// Bind the configuration properly
+var serviceConfiguration = configuration.GetSection("ApplicationConfiguration").Get<ListingServiceConfiguration>();
+
+// Validate that configuration was bound successfully
+if (serviceConfiguration == null)
+{
+    throw new InvalidOperationException("ApplicationConfiguration section is missing from configuration");
+}
+
+if (serviceConfiguration.RabbitMQSettings == null)
+{
+    throw new InvalidOperationException("RabbitMQSettings is missing from ApplicationConfiguration");
+}
+
+if (serviceConfiguration.PostgresSqlSettings == null)
+{
+    throw new InvalidOperationException("PostgresSqlSettings is missing from ApplicationConfiguration");
+}
+
+// Add debug logging to verify binding worked
+builder.Services.AddLogging();
+var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
+var logger = loggerFactory.CreateLogger<Program>();
+logger.LogInformation($"RabbitMQ Host: {serviceConfiguration.RabbitMQSettings.Host}");
+logger.LogInformation($"PostgreSQL Connection: {serviceConfiguration.PostgresSqlSettings.ConnectionString}");
+
+// Register the configuration
+builder.Services.AddSingleton(serviceConfiguration);
 
 #endregion
 
@@ -79,13 +106,12 @@ builder.Services.AddAuthorizationBuilder()
 
 #endregion
 
-#region Other serivces
+#region Other services
 
 builder.Services
-    .AddSingleton(appConfig)
     .AddApplicationServices()
-    .AddPersistenceServices(appConfig)
-    .AddMessageBusServices(appConfig)
+    .AddPersistenceServices(serviceConfiguration)
+    .AddMessageBusServices(serviceConfiguration)
     .AddCors(options =>
     {
         options.AddDefaultPolicy(policy =>

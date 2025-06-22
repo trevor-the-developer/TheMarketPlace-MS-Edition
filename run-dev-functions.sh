@@ -1,3 +1,32 @@
+#!/bin/bash
+
+# TheMarketPlace Services Functions
+# Enhanced with improved health checks and Docker management
+
+# Color definitions for better readability
+GREEN='\033[0;32m'
+RED='\033[0;31m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+# Function to display colored output
+function log_info() {
+    echo -e "${BLUE}ℹ${NC} $1"
+}
+
+function log_success() {
+    echo -e "${GREEN}✓${NC} $1"
+}
+
+function log_warning() {
+    echo -e "${YELLOW}⚠${NC} $1"
+}
+
+function log_error() {
+    echo -e "${RED}✗${NC} $1"
+}
+
 # Function to check if Docker is running and supports compose v2
 function check_docker() {
     if ! docker info > /dev/null 2>&1; then
@@ -122,7 +151,76 @@ function run_service() {
     dotnet run --urls=http://localhost:$port
 }
 
-# Function to check service health
+# Function to check OpenSearch health specifically
+function check_opensearch_health() {
+    local max_attempts=3
+    local attempt=0
+    
+    while [ $attempt -lt $max_attempts ]; do
+        # Try OpenSearch health API endpoint
+        if curl -s -f "http://localhost:9200/_cluster/health" > /dev/null 2>&1; then
+            local health_status=$(curl -s "http://localhost:9200/_cluster/health" | grep -o '"status":"[^"]*"' | cut -d'"' -f4)
+            if [[ "$health_status" == "green" ]] || [[ "$health_status" == "yellow" ]]; then
+                return 0
+            fi
+        fi
+        
+        # Fallback: check if container is running and port is accessible
+        if docker compose ps opensearch | grep -q "Up" && \
+           timeout 5 bash -c "</dev/tcp/localhost/9200" 2>/dev/null; then
+            return 0
+        fi
+        
+        attempt=$((attempt + 1))
+        sleep 1
+    done
+    
+    return 1
+}
+
+# Function to check PostgreSQL health
+function check_postgres_health() {
+    # Check if container is healthy or running
+    if docker compose ps postgres | grep -q "healthy"; then
+        return 0
+    elif docker compose ps postgres | grep -q "Up" && \
+         timeout 5 bash -c "</dev/tcp/localhost/5432" 2>/dev/null; then
+        return 0
+    fi
+    return 1
+}
+
+# Function to check RabbitMQ health
+function check_rabbitmq_health() {
+    # Check if container is healthy
+    if docker compose ps rabbitmq | grep -q "healthy"; then
+        return 0
+    elif docker compose ps rabbitmq | grep -q "Up" && \
+         timeout 5 bash -c "</dev/tcp/localhost/5672" 2>/dev/null; then
+        return 0
+    fi
+    return 1
+}
+
+# Function to check MongoDB health
+function check_mongodb_health() {
+    if docker compose ps mongodb | grep -q "Up" && \
+       timeout 5 bash -c "</dev/tcp/localhost/27017" 2>/dev/null; then
+        return 0
+    fi
+    return 1
+}
+
+# Function to check MinIO health
+function check_minio_health() {
+    if docker compose ps minio | grep -q "Up" && \
+       timeout 5 bash -c "</dev/tcp/localhost/9000" 2>/dev/null; then
+        return 0
+    fi
+    return 1
+}
+
+# Enhanced service health check function
 function check_service_health() {
     local service_name=$1
     local port=$2
@@ -133,18 +231,212 @@ function check_service_health() {
     local attempt=0
     
     while [ $attempt -lt $max_attempts ]; do
-        if curl -s http://localhost:$port/health > /dev/null 2>&1; then
+        if curl -s -f "http://localhost:$port/health" > /dev/null 2>&1; then
             log_success "$service_name is healthy!"
             return 0
         fi
         
         attempt=$((attempt + 1))
-        log_info "Waiting for $service_name... (attempt $attempt/$max_attempts)"
-        sleep 2
+        if [ $attempt -lt $max_attempts ]; then
+            log_info "Waiting for $service_name... (attempt $attempt/$max_attempts)"
+            sleep 2
+        fi
     done
     
     log_warning "$service_name may not be ready yet"
     return 1
+}
+
+# Enhanced infrastructure health check
+function perform_health_checks() {
+    echo -e "\n${BLUE}=========================================${NC}"
+    echo -e "${BLUE}HEALTH CHECK RESULTS${NC}"
+    echo -e "${BLUE}=========================================${NC}"
+    
+    # Check application services
+    check_service_health "Authentication Service" 5000
+    check_service_health "Listing Service" 5001
+    check_service_health "Search Service" 5002
+    check_service_health "Document Processor" 5003
+    
+    echo ""
+    log_info "Infrastructure health:"
+    
+    # PostgreSQL
+    if check_postgres_health; then
+        log_success "PostgreSQL is running and healthy"
+    else
+        log_error "PostgreSQL is not running or not healthy"
+    fi
+    
+    # RabbitMQ
+    if check_rabbitmq_health; then
+        log_success "RabbitMQ is running and healthy"
+    else
+        log_error "RabbitMQ is not running or not healthy"
+    fi
+    
+    # OpenSearch (improved check)
+    if check_opensearch_health; then
+        log_success "OpenSearch is running and healthy"
+    else
+        log_error "OpenSearch is not running or not healthy"
+    fi
+    
+    # MongoDB
+    if check_mongodb_health; then
+        log_success "MongoDB is running"
+    else
+        log_warning "MongoDB is not running"
+    fi
+    
+    # MinIO
+    if check_minio_health; then
+        log_success "MinIO is running"
+    else
+        log_warning "MinIO is not running"
+    fi
+    
+    echo ""
+    log_info "Detailed container status:"
+    docker compose ps --format "table {{.Name}}\t{{.Status}}\t{{.Ports}}"
+}
+
+# Function to wait for OpenSearch to be ready
+function wait_for_opensearch() {
+    log_info "Waiting for OpenSearch to be ready..."
+    local max_attempts=30
+    local attempt=0
+    
+    while [ $attempt -lt $max_attempts ]; do
+        if check_opensearch_health; then
+            log_success "OpenSearch is ready!"
+            
+            # Also check cluster status
+            local cluster_info=$(curl -s "http://localhost:9200/_cluster/health" 2>/dev/null)
+            if [ $? -eq 0 ]; then
+                local status=$(echo "$cluster_info" | grep -o '"status":"[^"]*"' | cut -d'"' -f4)
+                local nodes=$(echo "$cluster_info" | grep -o '"number_of_nodes":[0-9]*' | cut -d':' -f2)
+                log_info "OpenSearch cluster status: $status, nodes: $nodes"
+            fi
+            return 0
+        fi
+        
+        attempt=$((attempt + 1))
+        log_info "Waiting for OpenSearch... (attempt $attempt/$max_attempts)"
+        sleep 3
+    done
+    
+    log_error "OpenSearch failed to become ready within expected time"
+    
+    # Show OpenSearch logs for debugging
+    log_info "OpenSearch container logs (last 20 lines):"
+    docker compose logs --tail=20 opensearch
+    
+    return 1
+}
+
+# Function to check all services status with detailed output
+function check_all_services_status() {
+    echo -e "\n${BLUE}=========================================${NC}"
+    echo -e "${BLUE}SERVICE STATUS CHECK${NC}"
+    echo -e "${BLUE}=========================================${NC}"
+    
+    local services=("auth:5000" "listing:5001" "search:5002" "docs:5003")
+    
+    echo -e "${GREEN}Application Services:${NC}"
+    for service_info in "${services[@]}"; do
+        IFS=':' read -r service port <<< "$service_info"
+        
+        if curl -s -f "http://localhost:$port/health" > /dev/null 2>&1; then
+            log_success "$service service is running (port $port)"
+        else
+            log_error "$service service is not responding (port $port)"
+        fi
+    done
+    
+    echo ""
+    echo -e "${GREEN}Infrastructure Services:${NC}"
+    
+    if check_postgres_health; then
+        log_success "PostgreSQL is healthy"
+    else
+        log_error "PostgreSQL is not healthy"
+    fi
+    
+    if check_rabbitmq_health; then
+        log_success "RabbitMQ is healthy" 
+    else
+        log_error "RabbitMQ is not healthy"
+    fi
+    
+    if check_opensearch_health; then
+        log_success "OpenSearch is healthy"
+    else
+        log_error "OpenSearch is not healthy"
+    fi
+    
+    if check_mongodb_health; then
+        log_success "MongoDB is running"
+    else
+        log_warning "MongoDB is not running"
+    fi
+    
+    if check_minio_health; then
+        log_success "MinIO is running"
+    else
+        log_warning "MinIO is not running"
+    fi
+    
+    echo ""
+    log_info "Docker container status:"
+    docker compose ps --format "table {{.Name}}\t{{.Status}}\t{{.Ports}}"
+}
+
+# Function to setup Docker infrastructure
+function setup_infrastructure() {
+    if [ "$SKIP_INFRASTRUCTURE" = true ]; then
+        log_info "Skipping infrastructure setup..."
+        return 0
+    fi
+
+    log_info "Starting infrastructure containers (PostgreSQL, OpenSearch, RabbitMQ, MongoDB, MinIO)..."
+    
+    check_docker
+    
+    # Start infrastructure services
+    docker compose up -d postgres opensearch opensearch-dashboards rabbitmq mongodb minio
+    
+    if [ $? -eq 0 ]; then
+        log_success "Infrastructure containers started successfully"
+        log_info "Waiting for infrastructure containers to be ready..."
+        sleep 15
+        
+        # Check if key services are responding
+        local max_attempts=10
+        local attempt=0
+        
+        while [ $attempt -lt $max_attempts ]; do
+            if check_postgres_health && check_rabbitmq_health; then
+                log_success "Core infrastructure services are ready!"
+                
+                # Wait for OpenSearch separately as it takes longer
+                wait_for_opensearch
+                break
+            fi
+            
+            attempt=$((attempt + 1))
+            log_info "Waiting for infrastructure services... (attempt $attempt/$max_attempts)"
+            sleep 3
+        done
+        
+        if [ $attempt -eq $max_attempts ]; then
+            log_warning "Some infrastructure services may still be starting up"
+        fi
+    else
+        log_error "Failed to start infrastructure containers"
+        exit 1
+    fi
 }
 
 # Function to display usage
@@ -187,120 +479,4 @@ function display_usage() {
     echo "  - Docker with Compose v2 (for --setup-docker)"
     echo "  - .NET SDK (for individual service development)"
     echo "  - curl (for health checks)"
-}
-
-# Function to check service status
-function check_all_services_status() {
-    echo -e "\n${BLUE}=========================================${NC}"
-    echo -e "${BLUE}SERVICE STATUS CHECK${NC}"
-    echo -e "${BLUE}=========================================${NC}"
-    
-    local services=("auth:5000" "listing:5001" "search:5002" "docs:5003")
-    
-    for service_info in "${services[@]}"; do
-        IFS=':' read -r service port <<< "$service_info"
-        
-        if curl -s http://localhost:$port/health > /dev/null 2>&1; then
-            log_success "$service service is running (port $port)"
-        else
-            log_error "$service service is not responding (port $port)"
-        fi
-    done
-    
-    echo ""
-    log_info "Docker container status:"
-    docker compose ps
-}
-
-# Function to perform health checks
-function perform_health_checks() {
-    echo -e "\n${BLUE}=========================================${NC}"
-    echo -e "${BLUE}HEALTH CHECK RESULTS${NC}"
-    echo -e "${BLUE}=========================================${NC}"
-    
-    check_service_health "Authentication Service" 5000
-    check_service_health "Listing Service" 5001
-    check_service_health "Search Service" 5002
-    check_service_health "Document Processor" 5003
-    
-    echo ""
-    log_info "Infrastructure health:"
-    if docker compose ps postgres | grep -q "healthy\|running"; then
-        log_success "PostgreSQL is running"
-    else
-        log_error "PostgreSQL is not running"
-    fi
-    
-    if docker compose ps rabbitmq | grep -q "healthy\|running"; then
-        log_success "RabbitMQ is running"
-    else
-        log_error "RabbitMQ is not running"
-    fi
-    
-    if docker compose ps opensearch | grep -q "healthy\|running"; then
-        log_success "OpenSearch is running"
-    else
-        log_error "OpenSearch is not running"
-    fi
-}
-
-# Function to display colored output
-function log_info() {
-    echo -e "${BLUE}ℹ${NC} $1"
-}
-
-function log_success() {
-    echo -e "${GREEN}✓${NC} $1"
-}
-
-function log_warning() {
-    echo -e "${YELLOW}⚠${NC} $1"
-}
-
-function log_error() {
-    echo -e "${RED}✗${NC} $1"
-}
-
-# Function to setup Docker infrastructure
-function setup_infrastructure() {
-    if [ "$SKIP_INFRASTRUCTURE" = true ]; then
-        log_info "Skipping infrastructure setup..."
-        return 0
-    fi
-
-    log_info "Starting infrastructure containers (PostgreSQL, OpenSearch, RabbitMQ, MongoDB, MinIO)..."
-    
-    check_docker
-    
-    # Start infrastructure services
-    docker compose up -d postgres opensearch opensearch-dashboards rabbitmq mongodb minio
-    
-    if [ $? -eq 0 ]; then
-        log_success "Infrastructure containers started successfully"
-        log_info "Waiting for infrastructure containers to be ready..."
-        sleep 15
-        
-        # Check if key services are responding
-        local max_attempts=10
-        local attempt=0
-        
-        while [ $attempt -lt $max_attempts ]; do
-            if curl -s http://localhost:5432 > /dev/null 2>&1 || \
-               docker compose ps postgres | grep -q "healthy\|running"; then
-                log_success "Infrastructure services are ready!"
-                break
-            fi
-            
-            attempt=$((attempt + 1))
-            log_info "Waiting for infrastructure services... (attempt $attempt/$max_attempts)"
-            sleep 3
-        done
-        
-        if [ $attempt -eq $max_attempts ]; then
-            log_warning "Infrastructure services may still be starting up"
-        fi
-    else
-        log_error "Failed to start infrastructure containers"
-        exit 1
-    fi
 }

@@ -1,51 +1,7 @@
 #!/bin/bash
 
-# TheMarketPlace Microservices API Testing Script
-# This script tests the various services in the TheMarketPlace microservices architecture
-# Aligned with postman collection and documentation
-
-# TODO: TK 26/05/2025 - move functions into a seperate file for reusability and cleaner code
-
-# Color definitions for better readability
-GREEN='\033[0;32m'
-RED='\033[0;31m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-NC='\033[0m' # No Color
-
-# Environment variables
-AUTH_SERVICE_URL="http://localhost:5000"
-LISTING_SERVICE_URL="http://localhost:5001"
-SEARCH_SERVICE_URL="http://localhost:5002"
-DOCUMENT_PROCESSOR_URL="http://localhost:5003"
-
-# Test user credentials (aligned with postman environment)
-TEST_USER_EMAIL="testuser@example.com"
-TEST_USER_PASSWORD="Password123!"
-TEST_USER_ROLE=1  # Seller role for listing operations
-ADMIN_EMAIL="admin@example.com"
-ADMIN_PASSWORD="Admin123!"
-SELLER_EMAIL="seller@example.com"
-SELLER_PASSWORD="Seller123!"
-CUSTOMER_EMAIL="customer@example.com"
-CUSTOMER_PASSWORD="Customer123!"
-
-# Storage for dynamic variables
-ACCESS_TOKEN=""
-REFRESH_TOKEN=""
-CONFIRMATION_TOKEN=""
-CATEGORY_ID=""
-LISTING_ID=""
-JOB_ID=""
-DOCUMENT_ID=""
-
-# Docker management flags
-SETUP_DOCKER=false
-TEARDOWN_DOCKER=false
-CLEAN_VOLUMES=false
-USE_UNIQUE_EMAIL=false
-SKIP_REGISTRATION=false
-CLEAN_DATABASES_ONLY=false
+# TheMarketPlace Microservices API Testing Functions
+# This file contains reusable functions for testing the microservices architecture
 
 # Function to display test header
 function test_header() {
@@ -550,47 +506,6 @@ function run_complete_auth_flow() {
     return 1
 }
 
-# Main function to run all tests
-function run_all_tests() {
-    echo -e "\n${GREEN}=========================================${NC}"
-    echo -e "${GREEN}MARKETPLACE SERVICES TEST SUITE${NC}"
-    echo -e "${GREEN}=========================================${NC}"
-    
-    # Test service availability
-    test_service_availability "$AUTH_SERVICE_URL" "Auth Service"
-    test_service_availability "$LISTING_SERVICE_URL" "Listing Service"
-    test_service_availability "$SEARCH_SERVICE_URL" "Search Service"
-    test_service_availability "$DOCUMENT_PROCESSOR_URL" "Document Processor"
-    
-    # Complete authentication flow with Seller user (required for listing operations)
-    run_complete_auth_flow "$TEST_USER_EMAIL" "$TEST_USER_PASSWORD" "$TEST_USER_ROLE" "Seller"
-    
-    if [ $? -eq 0 ]; then
-        # Listing tests
-        test_list_categories
-        test_create_listing
-        test_get_listing
-        test_update_listing
-        
-        # Search tests
-        test_basic_search
-        test_advanced_search
-        
-        # Document processor tests (background service)
-        test_generate_document
-        test_check_document_status
-        
-        # Cleanup
-        test_delete_listing
-    else
-        echo -e "${RED}Authentication flow failed. Skipping remaining tests.${NC}"
-    fi
-    
-    echo -e "\n${GREEN}=========================================${NC}"
-    echo -e "${GREEN}TEST SUITE COMPLETED${NC}"
-    echo -e "${GREEN}=========================================${NC}"
-}
-
 # Function to run specific test groups
 function run_auth_tests() {
     echo -e "\n${GREEN}======== AUTHENTICATION TESTS ========${NC}"
@@ -635,6 +550,47 @@ function run_document_tests() {
         test_check_document_status
         test_delete_listing
     fi
+}
+
+# Main function to run all tests
+function run_all_tests() {
+    echo -e "\n${GREEN}=========================================${NC}"
+    echo -e "${GREEN}MARKETPLACE SERVICES TEST SUITE${NC}"
+    echo -e "${GREEN}=========================================${NC}"
+    
+    # Test service availability
+    test_service_availability "$AUTH_SERVICE_URL" "Auth Service"
+    test_service_availability "$LISTING_SERVICE_URL" "Listing Service"
+    test_service_availability "$SEARCH_SERVICE_URL" "Search Service"
+    test_service_availability "$DOCUMENT_PROCESSOR_URL" "Document Processor"
+    
+    # Complete authentication flow with Seller user (required for listing operations)
+    run_complete_auth_flow "$TEST_USER_EMAIL" "$TEST_USER_PASSWORD" "$TEST_USER_ROLE" "Seller"
+    
+    if [ $? -eq 0 ]; then
+        # Listing tests
+        test_list_categories
+        test_create_listing
+        test_get_listing
+        test_update_listing
+        
+        # Search tests
+        test_basic_search
+        test_advanced_search
+        
+        # Document processor tests (background service)
+        test_generate_document
+        test_check_document_status
+        
+        # Cleanup
+        test_delete_listing
+    else
+        echo -e "${RED}Authentication flow failed. Skipping remaining tests.${NC}"
+    fi
+    
+    echo -e "\n${GREEN}=========================================${NC}"
+    echo -e "${GREEN}TEST SUITE COMPLETED${NC}"
+    echo -e "${GREEN}=========================================${NC}"
 }
 
 # Function to display configuration
@@ -692,101 +648,3 @@ function display_usage() {
     echo "  - curl command"
     echo "  - Optional: jq for better JSON parsing"
 }
-
-# Parse command line arguments
-while [[ $# -gt 0 ]]; do
-    case $1 in
-        --setup-docker)
-            SETUP_DOCKER=true
-            shift
-            ;;
-        --teardown-docker)
-            TEARDOWN_DOCKER=true
-            shift
-            ;;
-        --clean-volumes)
-            CLEAN_VOLUMES=true
-            shift
-            ;;
-        --clean-databases)
-            CLEAN_DATABASES_ONLY=true
-            shift
-            ;;
-        --unique-email)
-            USE_UNIQUE_EMAIL=true
-            shift
-            ;;
-        --skip-registration)
-            SKIP_REGISTRATION=true
-            shift
-            ;;
-        --help)
-            display_usage
-            exit 0
-            ;;
-        auth|listing|search|document|all)
-            TEST_GROUP=$1
-            shift
-            ;;
-        *)
-            echo -e "${RED}Unknown option: $1${NC}"
-            display_usage
-            exit 1
-            ;;
-    esac
-done
-
-# Default test group if none specified
-if [ -z "$TEST_GROUP" ]; then
-    TEST_GROUP="all"
-fi
-
-# Handle --clean-databases option (can be standalone or combined)
-if [ "$CLEAN_DATABASES_ONLY" = true ]; then
-    clean_databases
-    if [ $? -ne 0 ]; then
-        echo -e "${RED}Database cleaning failed. Exiting.${NC}"
-        exit 1
-    fi
-    
-    # If this was the only action requested, exit
-    if [ "$SETUP_DOCKER" = false ] && [ "$TEST_GROUP" = "all" ] && [ $# -eq 0 ]; then
-        echo -e "${GREEN}✓ Database cleaning completed successfully${NC}"
-        exit 0
-    fi
-fi
-
-# Display configuration
-display_configuration
-
-# Setup Docker environment if requested
-setup_docker_environment
-
-# Trap to ensure cleanup on script exit
-trap 'teardown_docker_environment' EXIT
-
-# Run the appropriate test group
-case "$TEST_GROUP" in
-    "auth")
-        run_auth_tests
-        ;;
-    "listing")
-        run_listing_tests
-        ;;
-    "search")
-        run_search_tests
-        ;;
-    "document")
-        run_document_tests
-        ;;
-    "all"|*)
-        run_all_tests
-        ;;
-esac
-
-# Manual teardown if not using trap
-if [ "$TEARDOWN_DOCKER" = true ]; then
-    teardown_docker_environment
-fi
-
-echo -e "\n${GREEN}🎉 Testing completed! Check the results above.${NC}"

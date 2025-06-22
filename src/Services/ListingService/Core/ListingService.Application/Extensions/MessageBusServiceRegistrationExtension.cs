@@ -1,8 +1,8 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using ListingService.Application.Settings;
 using MassTransit;
 using Microsoft.Extensions.DependencyInjection;
-using ListingService.Application.Settings;
 
 namespace ListingService.Application.Extensions;
 
@@ -11,6 +11,11 @@ public static class MessageBusServiceRegistrationExtension
     public static IServiceCollection AddMessageBusServices(this IServiceCollection services,
         ListingServiceConfiguration serviceConfiguration)
     {
+        if (serviceConfiguration?.RabbitMQSettings == null)
+        {
+            throw new InvalidOperationException("RabbitMQSettings configuration is missing or null");
+        }
+
         services.AddMassTransit(config =>
         {
             config.UsingRabbitMq((context, cfg) =>
